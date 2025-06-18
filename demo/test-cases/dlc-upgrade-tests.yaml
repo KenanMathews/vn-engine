@@ -1,0 +1,235 @@
+# Comprehensive DLC upgrade testing scenarios
+
+category: "DLC Testing"
+description: "Tests script upgrade functionality and DLC validation"
+priority: 5
+
+tests:
+  - name: "Basic Additive Upgrade"
+    description: "Tests simple DLC addition to base script"
+    dlc_tests:
+      - name: "Add New Scene"
+        description: "Add a new scene without conflicts"
+        base_script: |
+          base_scene:
+            - "Welcome to the base game!"
+            - speaker: "Guide"
+              say: "This is the original content."
+        dlc_content: |
+          dlc_scene:
+            - "Welcome to the DLC!"
+            - speaker: "DLC Character"
+              say: "This is new content!"
+        upgrade_options:
+          mode: "additive"
+        expected_result:
+          success: true
+          added_scenes: ["dlc_scene"]
+          replaced_scenes: []
+
+  - name: "Namespace Upgrade"
+    description: "Tests DLC with namespace prefixing"
+    dlc_tests:
+      - name: "Namespaced DLC Content"
+        description: "Add DLC content with namespace prefix"
+        base_script: |
+          main_story:
+            - "Main story content"
+            - goto: ending
+          ending:
+            - "The end of the main story"
+        dlc_content: |
+          bonus_scene:
+            - "Bonus content!"
+            - goto: secret_ending
+          secret_ending:
+            - "Secret ending unlocked!"
+        upgrade_options:
+          mode: "additive"
+          namespace: "expansion"
+        expected_result:
+          success: true
+          added_scenes: ["expansion_bonus_scene", "expansion_secret_ending"]
+          replaced_scenes: []
+
+  - name: "Conflict Prevention"
+    description: "Tests prevention of unauthorized overwrites"
+    dlc_tests:
+      - name: "Unauthorized Overwrite Prevention"
+        description: "Should prevent overwriting existing scenes in additive mode"
+        base_script: |
+          existing_scene:
+            - "Original content"
+        dlc_content: |
+          existing_scene:
+            - "Conflicting content"
+        upgrade_options:
+          mode: "additive"
+        expected_result:
+          success: false
+
+  - name: "Authorized Replacement"
+    description: "Tests authorized scene replacement"
+    dlc_tests:
+      - name: "Authorized Scene Replacement"
+        description: "Replace scene with explicit permission"
+        base_script: |
+          replaceable_scene:
+            - "Original version"
+          keep_scene:
+            - "This should stay"
+        dlc_content: |
+          replaceable_scene:
+            - "Updated version"
+        upgrade_options:
+          mode: "replace"
+          allowOverwrite: ["replaceable_scene"]
+        expected_result:
+          success: true
+          added_scenes: []
+          replaced_scenes: ["replaceable_scene"]
+
+  - name: "Complex Integration"
+    description: "Tests complex DLC with multiple scenes and references"
+    dlc_tests:
+      - name: "Multi-Scene DLC"
+        description: "DLC with multiple interconnected scenes"
+        base_script: |
+          start:
+            - "Game starts here"
+            - text: "Where to go?"
+              choices:
+                - text: "Continue main story"
+                  goto: main_path
+          main_path:
+            - "Main story path"
+        dlc_content: |
+          dlc_intro:
+            - "DLC introduction"
+            - goto: dlc_content
+          dlc_content:
+            - "DLC main content"
+            - text: "DLC choice:"
+              choices:
+                - text: "Return to main game"
+                  goto: main_path
+                - text: "Continue DLC"
+                  goto: dlc_ending
+          dlc_ending:
+            - "DLC ending"
+        upgrade_options:
+          mode: "additive"
+          namespace: "dlc"
+        expected_result:
+          success: true
+          added_scenes: ["dlc_dlc_intro", "dlc_dlc_content", "dlc_dlc_ending"]
+
+  - name: "Validation Testing"
+    description: "Tests upgrade validation without applying changes"
+    dlc_tests:
+      - name: "Dry Run Validation"
+        description: "Validate upgrade without applying"
+        base_script: |
+          base:
+            - "Base content"
+        dlc_content: |
+          new_content:
+            - "New DLC content"
+        upgrade_options:
+          mode: "additive"
+          dryRun: true
+        validation_test: true
+        expected_result:
+          success: true
+          added_scenes: ["new_content"]
+
+  - name: "Reference Validation"
+    description: "Tests validation of scene references"
+    dlc_tests:
+      - name: "Invalid Reference Detection"
+        description: "Should detect invalid scene references"
+        base_script: |
+          valid_scene:
+            - "Valid content"
+        dlc_content: |
+          dlc_scene:
+            - "DLC content"
+            - goto: nonexistent_scene
+        upgrade_options:
+          mode: "additive"
+        expected_result:
+          success: false
+
+  - name: "State Preservation"
+    description: "Tests that current game state is preserved during upgrade"
+    dlc_tests:
+      - name: "Current Scene Preservation"
+        description: "Current scene should remain valid after upgrade"
+        base_script: |
+          current_scene:
+            - "You are here"
+            - "Current instruction"
+          other_scene:
+            - "Other content"
+        dlc_content: |
+          new_scene:
+            - "New DLC scene"
+        upgrade_options:
+          mode: "additive"
+          validateState: true
+        expected_result:
+          success: true
+          added_scenes: ["new_scene"]
+
+  - name: "Warning Generation"
+    description: "Tests generation of appropriate warnings"
+    dlc_tests:
+      - name: "Large DLC Warning"
+        description: "Should warn about large DLC packages"
+        base_script: |
+          base:
+            - "Base content"
+        dlc_content: |
+          scene1: ["Content 1"]
+          scene2: ["Content 2"]
+          scene3: ["Content 3"]
+          scene4: ["Content 4"]
+          scene5: ["Content 5"]
+          scene6: ["Content 6"]
+          scene7: ["Content 7"]
+          scene8: ["Content 8"]
+          scene9: ["Content 9"]
+          scene10: ["Content 10"]
+        upgrade_options:
+          mode: "additive"
+        expected_result:
+          success: true
+          warnings_count: 1
+
+  - name: "Edge Cases"
+    description: "Tests edge cases and error conditions"
+    dlc_tests:
+      - name: "Empty DLC Content"
+        description: "Handle empty DLC gracefully"
+        base_script: |
+          base:
+            - "Base content"
+        dlc_content: ""
+        upgrade_options:
+          mode: "additive"
+        expected_result:
+          success: false
+
+      - name: "Invalid YAML DLC"
+        description: "Handle malformed DLC content"
+        base_script: |
+          base:
+            - "Base content"
+        dlc_content: |
+          invalid_yaml:
+            - "Missing quote
+            - goto: invalid
+        upgrade_options:
+          mode: "additive"
+        expected_result:
+          success: false

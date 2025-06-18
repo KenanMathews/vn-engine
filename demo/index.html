@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VN Engine Library - Demo Portal</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        text-align: center;
+        max-width: 700px;
+        width: 100%;
+      }
+
+      h1 {
+        color: #2d3748;
+        margin-bottom: 10px;
+        font-size: 2.5rem;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        color: #718096;
+        margin-bottom: 40px;
+        font-size: 1.1rem;
+      }
+
+      .demo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 30px;
+      }
+
+      .demo-card {
+        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 30px 20px;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .demo-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      .demo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+      }
+
+      .demo-card:hover::before {
+        transform: scaleX(1);
+      }
+
+      .demo-icon {
+        font-size: 3rem;
+        margin-bottom: 10px;
+      }
+
+      .demo-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+      }
+
+      .demo-description {
+        color: #718096;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        text-align: center;
+      }
+
+      .demo-features {
+        margin-top: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .feature-tag {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .info-section {
+        background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+        border: 1px solid #9ae6b4;
+        border-radius: 12px;
+        padding: 25px;
+        margin-top: 30px;
+      }
+
+      .info-section h3 {
+        color: #2f855a;
+        margin-bottom: 15px;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .info-section p {
+        color: #38a169;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        text-align: left;
+      }
+
+      .quick-links {
+        background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+        border: 1px solid #feb2b2;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+      }
+
+      .quick-links h4 {
+        color: #c53030;
+        margin-bottom: 12px;
+        font-size: 1rem;
+      }
+
+      .link-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+      }
+
+      .quick-link {
+        background: white;
+        border: 1px solid #fed7d7;
+        border-radius: 8px;
+        padding: 12px;
+        text-decoration: none;
+        color: #c53030;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .quick-link:hover {
+        background: #c53030;
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      @media (max-width: 640px) {
+        .demo-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        h1 {
+          font-size: 2rem;
+        }
+        
+        .container {
+          padding: 30px 20px;
+        }
+
+        .demo-card {
+          padding: 25px 15px;
+        }
+
+        .link-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎭 VN Engine Library</h1>
+      <p class="subtitle">Interactive Visual Novel Engine Demo Portal</p>
+      
+      <div class="demo-grid">
+        <a href="./interactive.html" class="demo-card">
+          <div class="demo-icon">🎮</div>
+          <div class="demo-title">Interactive Demo</div>
+          <div class="demo-description">
+            Live YAML editor with real-time gameplay. 
+            Perfect for experimenting with scripts, testing dialogue systems, 
+            and seeing the engine in action.
+          </div>
+          <div class="demo-features">
+            <span class="feature-tag">YAML Editor</span>
+            <span class="feature-tag">Live Preview</span>
+            <span class="feature-tag">Examples</span>
+          </div>
+        </a>
+        
+        <a href="./demo-test.html" class="demo-card">
+          <div class="demo-icon">🧪</div>
+          <div class="demo-title">Automated Test Suite</div>
+          <div class="demo-description">
+            Comprehensive automated tests validating all engine functionality. 
+            Essential for debugging issues and ensuring everything works perfectly.
+          </div>
+          <div class="demo-features">
+            <span class="feature-tag">50+ Tests</span>
+            <span class="feature-tag">Full Coverage</span>
+            <span class="feature-tag">Validation</span>
+          </div>
+        </a>
+      </div>
+      
+      <div class="info-section">
+        <h3>🚀 Getting Started Guide</h3>
+        <p>
+          <strong>🎮 Interactive Demo:</strong> Start here if you want to experiment with the VN Engine. 
+          Features a live YAML editor, example scripts, and real-time preview. Perfect for learning 
+          the script format and testing your ideas.<br><br>
+          
+          <strong>🧪 Test Suite:</strong> Use this to validate engine functionality, run regression tests, 
+          or debug issues. Includes comprehensive tests for variables, flags, choices, templates, 
+          conditionals, and integration scenarios.
+        </p>
+      </div>
+
+      <div class="quick-links">
+        <h4>📚 Quick Links</h4>
+        <div class="link-grid">
+          <a href="../README.md" class="quick-link">
+            📖 Documentation
+          </a>
+          <a href="https://github.com/your-repo/vn-engine" class="quick-link">
+            💻 GitHub Repository
+          </a>
+          <a href="../src/index.ts" class="quick-link">
+            🔧 Source Code
+          </a>
+          <a href="../test/library-test.js" class="quick-link">
+            🧪 Node.js Tests
+          </a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

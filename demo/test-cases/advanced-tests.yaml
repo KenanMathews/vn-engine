@@ -1,0 +1,262 @@
+# demo/test-cases/advanced-tests.yaml
+# Advanced VN Engine functionality tests
+
+category: "Advanced Features"
+description: "Tests complex scenarios, nested data, and advanced helper usage"
+priority: 2
+
+tests:
+  - name: "Nested Variable Access"
+    description: "Tests complex nested object variable access"
+    script: |
+      nested_test:
+        - actions:
+            - type: setVar
+              key: player
+              value:
+                name: "Hero"
+                stats: { health: 100, mana: 50, level: 5 }
+                equipment: { weapon: { name: "Iron Sword", damage: 15 }, armor: { name: "Leather Vest", defense: 8 } }
+        - "Character: {{player.name}} (Level {{player.stats.level}})"
+        - "Health: {{player.stats.health}}, Mana: {{player.stats.mana}}"
+        - "Weapon: {{player.equipment.weapon.name}} ({{player.equipment.weapon.damage}} damage)"
+        - actions:
+            - type: addVar
+              key: player.stats.health
+              value: 25
+        - "Updated Health: {{player.stats.health}}"
+    scene: "nested_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Character: Hero (Level 5)"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Health: 100, Mana: 50"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Weapon: Iron Sword (15 damage)"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Updated Health: 125"
+    final_state:
+      variables:
+        "player.stats.health": 125
+
+  - name: "Array Operations"
+    description: "Tests array helper functions and list operations"
+    script: |
+      array_test:
+        - actions:
+            - type: setVar
+              key: inventory
+              value: [{ name: "Sword", damage: 10 }, { name: "Shield", defense: 5 }, { name: "Potion", healing: 30 }]
+            - type: setVar
+              key: numbers
+              value: [10, 5, 15, 3, 8]
+        - "Inventory: {{length inventory}} items"
+        - "First item: {{first inventory.name}}"
+        - "All items: {{join (pluck inventory 'name') ', '}}"
+        - "Numbers: {{join numbers ', '}}"
+        - "Max number: {{max numbers}}, Min: {{min numbers}}"
+        - "Average: {{round (average numbers) 1}}"
+    scene: "array_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Inventory: 3 items"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "First item: Sword"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "All items: Sword, Shield, Potion"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Numbers: 10, 5, 15, 3, 8"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Max number: 15, Min: 3"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Average: 8"
+
+  - name: "Complex Choice Logic"
+    description: "Tests choices with conditions and complex branching"
+    script: |
+      complex_choice_test:
+        - actions:
+            - type: setVar
+              key: player_coins
+              value: 100
+            - type: setVar
+              key: player_level
+              value: 3
+        - text: "What do you want to do?"
+          choices:
+            - text: "Buy expensive item (150 coins)"
+              condition: "gte player_coins 150"
+              actions:
+                - type: addVar
+                  key: player_coins
+                  value: -150
+              goto: expensive_purchase
+            - text: "Buy cheap item (50 coins)"
+              condition: "gte player_coins 50"
+              actions:
+                - type: addVar
+                  key: player_coins
+                  value: -50
+              goto: cheap_purchase
+            - text: "Level up (Requires level 5+)"
+              condition: "gte player_level 5"
+              actions:
+                - type: addVar
+                  key: player_level
+                  value: 1
+              goto: level_up
+            - text: "Just leave"
+              goto: leave_shop
+      cheap_purchase:
+        - "You bought a cheap item! Coins left: {{player_coins}}"
+      leave_shop:
+        - "You left the shop."
+    scene: "complex_choice_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "show_choices"
+          choices_count: 2  # Only 2 choices should be available due to conditions
+      - action: "choice"
+        choice_index: 0  # Buy cheap item
+        expected:
+          type: "display_dialogue"
+          content: "You bought a cheap item! Coins left: 50"
+    final_state:
+      variables:
+        player_coins: 50
+
+  - name: "VN Specific Helpers"
+    description: "Tests VN-specific helpers like playerChose, hasFlag, getVar"
+    script: |
+      vn_helpers_test:
+        - actions:
+            - type: setFlag
+              flag: met_merchant
+            - type: setVar
+              key: player_name
+              value: "Alice"
+        - text: "Choose an action:"
+          choices:
+            - text: "Help the stranger"
+              actions:
+                - type: setFlag
+                  flag: helped_stranger
+              goto: helper_result
+            - text: "Walk away"
+              goto: walker_result
+      helper_result:
+        - "{{#playerChose 'Help the stranger'}}You chose to help!{{/playerChose}}"
+        - "{{#hasFlag 'met_merchant'}}The merchant remembers you.{{/hasFlag}}"
+        - "Safe variable access: {{getVar 'player_name' 'Unknown'}}"
+        - "Missing variable: {{getVar 'nonexistent' 'Default'}}"
+      walker_result:
+        - "You walked away."
+    scene: "vn_helpers_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "show_choices"
+          choices_count: 2
+      - action: "choice"
+        choice_index: 0
+        expected:
+          type: "display_dialogue"
+          content: "You chose to help!"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "The merchant remembers you."
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Safe variable access: Alice"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing variable: Default"
+    final_state:
+      flags: ["met_merchant", "helped_stranger"]
+
+  - name: "Time System"
+    description: "Tests time tracking and formatting"
+    script: |
+      time_test:
+        - actions:
+            - type: addTime
+              minutes: 480  # 8:00 AM
+        - "Current time: {{formatTime gameTime}}"
+        - actions:
+            - type: addTime
+              minutes: 90   # +1.5 hours
+        - "After some activities: {{formatTime gameTime}}"
+        - actions:
+            - type: addTime
+              minutes: 270  # +4.5 hours
+        - "Much later: {{formatTime gameTime}}"
+    scene: "time_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Current time: 08:00"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "After some activities: 09:30"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Much later: 14:00"
+
+  - name: "Error Resilience"
+    description: "Tests graceful handling of missing data and edge cases"
+    script: |
+      error_test:
+        - "Missing variable: '{{undefined_var}}' (should be empty)"
+        - "Safe access: {{getVar 'missing.nested.value' 'fallback'}}"
+        - "Math with undefined: {{add undefined_var 10}}"
+        - "Array length of undefined: {{length undefined_array}}"
+        - "{{#hasFlag 'nonexistent_flag'}}This won't show{{else}}Flag not found{{/hasFlag}}"
+    scene: "error_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Missing variable: '' (should be empty)"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Safe access: fallback"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Math with undefined: 10"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Array length of undefined: 0"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Flag not found"

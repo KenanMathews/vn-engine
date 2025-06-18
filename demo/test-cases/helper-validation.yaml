@@ -1,0 +1,270 @@
+# demo/test-cases/helper-validation.yaml
+# Comprehensive helper validation tests
+
+category: "Helper Validation"
+description: "Validates all template helpers across all categories"
+priority: 3
+
+tests:
+  - name: "Math Helpers"
+    description: "Tests all mathematical helper functions"
+    template_tests:
+      - template: "{{add 15 25}}"
+        expected: "40"
+        description: "Basic addition"
+      - template: "{{subtract 100 35}}"
+        expected: "65"
+        description: "Basic subtraction"
+      - template: "{{multiply 8 9}}"
+        expected: "72"
+        description: "Basic multiplication"
+      - template: "{{divide 144 12}}"
+        expected: "12"
+        description: "Basic division"
+      - template: "{{max 5 10 15 3}}"
+        expected: "15"
+        description: "Maximum value"
+      - template: "{{min 5 10 15 3}}"
+        expected: "3"
+        description: "Minimum value"
+      - template: "{{round 3.14159 2}}"
+        expected: "3.14"
+        description: "Rounding with precision"
+      - template: "{{abs -42}}"
+        expected: "42"
+        description: "Absolute value"
+      - template: "{{ceil 3.2}}"
+        expected: "4"
+        description: "Ceiling function"
+      - template: "{{floor 3.8}}"
+        expected: "3"
+        description: "Floor function"
+
+  - name: "String Helpers"
+    description: "Tests string manipulation helpers"
+    template_tests:
+      - template: '{{uppercase "hello world"}}'
+        expected: "HELLO WORLD"
+        description: "Uppercase conversion"
+      - template: '{{lowercase "HELLO WORLD"}}'
+        expected: "hello world"
+        description: "Lowercase conversion"
+      - template: '{{capitalize "hello world"}}'
+        expected: "Hello world"
+        description: "Capitalize first letter"
+      - template: '{{capitalizeEach "hello world"}}'
+        expected: "Hello World"
+        description: "Capitalize each word"
+      - template: '{{trim "  hello world  "}}'
+        expected: "hello world"
+        description: "Trim whitespace"
+      - template: '{{truncate "this is a long string" 10 "..."}}'
+        expected: "this is..."
+        description: "Truncate with suffix"
+      - template: '{{replace "hello world" "world" "universe"}}'
+        expected: "hello universe"
+        description: "String replacement"
+      - template: '{{reverse "hello"}}'
+        expected: "olleh"
+        description: "String reversal"
+      - template: '{{repeat "hi" 3}}'
+        expected: "hihihi"
+        description: "String repetition"
+      - template: '{{padStart "5" 3 "0"}}'
+        expected: "005"
+        description: "Pad start with zeros"
+
+  - name: "Array Helpers"
+    description: "Tests array manipulation helpers"
+    script: |
+      array_helper_test:
+        - actions:
+            - type: setVar
+              key: test_array
+              value: ["apple", "banana", "cherry", "date"]
+            - type: setVar
+              key: numbers
+              value: [3, 1, 4, 1, 5, 9, 2]
+            - type: setVar
+              key: objects
+              value: [{ name: "Alice", age: 25 }, { name: "Bob", age: 30 }, { name: "Charlie", age: 20 }]
+        - "Array length: {{length test_array}}"
+        - "First item: {{first test_array}}"
+        - "Last item: {{last test_array}}"
+        - "Joined: {{join test_array ', '}}"
+        - "Reversed: {{join (reverse test_array) ', '}}"
+        - "First 2: {{join (take test_array 2) ', '}}"
+        - "Sorted numbers: {{join (sort numbers) ', '}}"
+        - "Unique numbers: {{join (unique numbers) ', '}}"
+        - "Names: {{join (pluck objects 'name') ', '}}"
+        - "Sorted by age: {{join (pluck (sortBy objects 'age') 'name') ', '}}"
+    scene: "array_helper_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Array length: 4"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "First item: apple"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Last item: date"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Joined: apple, banana, cherry, date"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Reversed: date, cherry, banana, apple"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "First 2: apple, banana"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Sorted numbers:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Unique numbers:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Names: Alice, Bob, Charlie"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Sorted by age: Charlie, Alice, Bob"
+
+  - name: "Comparison Helpers"
+    description: "Tests comparison and logical helpers"
+    template_tests:
+      - template: "{{eq 42 42}}"
+        expected: "true"
+        description: "Equality check"
+      - template: "{{ne 42 24}}"
+        expected: "true"
+        description: "Not equal check"
+      - template: "{{gt 15 10}}"
+        expected: "true"
+        description: "Greater than"
+      - template: "{{gte 15 15}}"
+        expected: "true"
+        description: "Greater than or equal"
+      - template: "{{lt 5 10}}"
+        expected: "true"
+        description: "Less than"
+      - template: "{{lte 5 5}}"
+        expected: "true"
+        description: "Less than or equal"
+      - template: "{{and true true}}"
+        expected: "true"
+        description: "Logical AND"
+      - template: "{{or false true}}"
+        expected: "true"
+        description: "Logical OR"
+      - template: "{{not false}}"
+        expected: "true"
+        description: "Logical NOT"
+      - template: "{{ifx true 'yes' 'no'}}"
+        expected: "yes"
+        description: "Ternary operator"
+
+  - name: "VN Core Helpers"
+    description: "Tests VN-specific helpers"
+    script: |
+      vn_core_test:
+        - actions:
+            - type: setFlag
+              flag: test_flag
+            - type: setVar
+              key: player
+              value: { name: "TestPlayer", score: 1000 }
+            - type: addTime
+              minutes: 125
+        - "Has flag: {{hasFlag 'test_flag'}}"
+        - "Missing flag: {{hasFlag 'missing_flag'}}"
+        - "Get variable: {{getVar 'player.name' 'Unknown'}}"
+        - "Get missing: {{getVar 'player.missing' 'Default'}}"
+        - "Formatted time: {{formatTime gameTime}}"
+        - "Debug output: {{debug player.score 'Player Score'}}"
+        - "Timestamp: {{timestamp}}"
+    scene: "vn_core_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Has flag: true"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing flag: false"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Get variable: TestPlayer"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Get missing: Default"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Formatted time: 02:05"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Debug output:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Timestamp:"
+
+  - name: "Complex Helper Combinations"
+    description: "Tests complex combinations of helpers"
+    script: |
+      complex_helper_test:
+        - actions:
+            - type: setVar
+              key: party
+              value: [{ name: "Alice", level: 5, hp: 80 }, { name: "Bob", level: 3, hp: 60 }, { name: "Charlie", level: 7, hp: 90 }]
+            - type: setVar
+              key: difficulty
+              value: "normal"
+        - "Party status: {{#each party}}{{name}} (Lv.{{level}}, {{hp}}HP){{#unless @last}}, {{/unless}}{{/each}}"
+        - "Average level: {{round (average (pluck party 'level')) 1}}"
+        - "Total HP: {{sum (pluck party 'hp')}}"
+        - "Strongest member: {{first (sortBy party 'hp').name}} with {{first (sortBy party 'hp').hp}} HP"
+        - "High level members: {{join (pluck (filter party 'level >= 5') 'name') ', '}}"
+        - "Difficulty modifier: {{multiply (ifx (eq difficulty 'hard') 1.5 1.0) 100}}%"
+    scene: "complex_helper_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Party status: Alice (Lv.5, 80HP), Bob (Lv.3, 60HP), Charlie (Lv.7, 90HP)"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Average level: 5"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Total HP: 230"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Strongest member: Charlie with 90 HP"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "High level members:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Difficulty modifier: 100%"

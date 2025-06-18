@@ -1,0 +1,5 @@
+hello:
+  - "Hello World!"
+  - speaker: "System"
+    say: "This is a simple example."
+  - "The End."

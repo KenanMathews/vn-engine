@@ -1,0 +1,258 @@
+intro:
+  - "🎉 Welcome to the VN Engine Helper Showcase!"
+  - "This demo shows supported template helpers with correct syntax."
+  - actions:
+      - type: setVar
+        key: player
+        value: 
+          name: "Alex"
+          level: 5
+          stats: { health: 100, mana: 75, strength: 12, intelligence: 15 }
+          equipment: { weapon: { name: "Iron Sword", damage: 25 }, armor: { name: "Steel Plate", defense: 18 } }
+      - type: setVar
+        key: inventory
+        value: [
+          { name: "Health Potion", quantity: 3, value: 50 },
+          { name: "Mana Crystal", quantity: 1, value: 200 },
+          { name: "Ancient Scroll", quantity: 1, value: 1000 }
+        ]
+      - type: setVar
+        key: game
+        value: { coins: 500, time: 480, location: "Mystical Academy", day: 1 }
+      - type: setVar
+        key: party
+        value: [
+          { name: "Luna", class: "Mage", level: 4, hp: 80, relationship: 65 },
+          { name: "Rex", class: "Warrior", level: 6, hp: 120, relationship: 45 },
+          { name: "Zara", class: "Rogue", level: 3, hp: 60, relationship: 80 }
+        ]
+      - type: setFlag
+        flag: tutorial_complete
+      - type: setFlag
+        flag: visited_academy
+  - goto: helper_showcase
+
+helper_showcase:
+  - speaker: "System"
+    say: "Let's explore the helper categories! Current time: {{formatTime game.time}}"
+  - text: "Which helper category would you like to see?"
+    choices:
+      - text: "🧮 Math & Numbers"
+        goto: math_showcase
+      - text: "📝 String Processing"
+        goto: string_showcase
+      - text: "📊 Arrays & Lists"
+        goto: array_showcase
+      - text: "🔍 Logic & Comparisons"
+        goto: logic_showcase
+      - text: "🎮 VN-Specific Features"
+        goto: vn_showcase
+      - text: "🌟 Advanced Showcase"
+        goto: advanced_showcase
+
+math_showcase:
+  - speaker: "Math Professor"
+    say: "Welcome to the Mathematics Department!"
+  - "=== BASIC ARITHMETIC ==="
+  - "Player Level: {{player.level}}"
+  - "Experience needed: {{multiply player.level 100}} XP"
+  - "Add stat bonus: {{add player.stats.strength player.stats.intelligence}} total power"
+  - "Damage calculation: {{multiply player.equipment.weapon.damage (add 1 (divide player.stats.strength 10))}}"
+  - "=== ADVANCED MATH ==="
+  - "Party average level: {{round (average (pluck party 'level')) 1}}"
+  - "Strongest member level: {{max (pluck party 'level')}}"
+  - "Weakest member level: {{min (pluck party 'level')}}"
+  - "Total party HP: {{sum (pluck party 'hp')}}"
+  - "Random encounter chance: {{round (random 1 100)}}%"
+  - text: "Impressive calculations! What next?"
+    choices:
+      - text: "📊 See Array Operations"
+        goto: array_showcase
+      - text: "🔙 Back to Menu"
+        goto: helper_showcase
+
+string_showcase:
+  - speaker: "Librarian"
+    say: "Welcome to the Library! Here we master text manipulation."
+  - "=== TEXT TRANSFORMATIONS ==="
+  - "Player name: '{{player.name}}' → Uppercase: '{{uppercase player.name}}'"
+  - "Location: '{{game.location}}' → Lowercase: '{{lowercase game.location}}'"
+  - "Weapon: '{{capitalize player.equipment.weapon.name}}'"
+  - "=== STRING OPERATIONS ==="
+  - "Inventory count: 'You have {{length inventory}} items'"
+  - "Truncated description: '{{truncate 'You have many wonderful items in your magical inventory bag.' 25 '...'}}'"
+  - "Party member names: {{join (pluck party 'name') ', '}}"
+  - "Reversed location: '{{reverse game.location}}'"
+  - "=== CONDITIONAL TEXT ==="
+  - "Status: {{#if (gt player.stats.health 80)}}{{uppercase 'excellent health'}}{{else}}{{capitalize 'needs rest'}}{{/if}}"
+  - "Padded level: '[{{padStart player.level 3 '0'}}]'"
+  - text: "Text mastery achieved! Where to next?"
+    choices:
+      - text: "🔍 Explore Logic Systems"
+        goto: logic_showcase
+      - text: "🔙 Back to Menu"
+        goto: helper_showcase
+
+array_showcase:
+  - speaker: "Inventory Master"
+    say: "Greetings! Let me show you array management."
+  - "=== INVENTORY ANALYSIS ==="
+  - "Total items: {{length inventory}}"
+  - "First item: {{first (pluck inventory 'name')}}"
+  - "All item names: {{join (pluck inventory 'name') ' | '}}"
+  - "Item values: {{join (pluck inventory 'value') ', '}} gold"
+  - "=== PARTY OPERATIONS ==="
+  - "Party size: {{length party}}"
+  - "All members: {{#each party}}{{name}} ({{class}}){{#unless @last}}, {{/unless}}{{/each}}"
+  - "Member names only: {{join (pluck party 'name') ', '}}"
+  - "HP values: {{join (pluck party 'hp') ', '}} HP"
+  - "=== ARRAY UTILITIES ==="
+  - "Unique classes: {{join (unique (pluck party 'class')) ', '}}"
+  - "Reversed party order: {{join (pluck (reverse party) 'name') ' → '}}"
+  - "First 2 members: {{join (pluck (slice party 0 2) 'name') ' & '}}"
+  - text: "Array mastery complete! Continue exploring?"
+    choices:
+      - text: "📝 Try String Processing"
+        goto: string_showcase
+      - text: "🔙 Back to Menu"
+        goto: helper_showcase
+
+logic_showcase:
+  - speaker: "Logic Scholar"
+    say: "Enter the realm of logical reasoning!"
+  - "=== BASIC COMPARISONS ==="
+  - "Player level check: {{ifx (gte player.level 5) 'Experienced Adventurer' 'Novice'}}"
+  - "Health status: {{#if (gt player.stats.health 90)}}Excellent{{else}}{{#if (gt player.stats.health 50)}}Good{{else}}Poor{{/if}}{{/if}}"
+  - "Coin wealth: {{#if (gte game.coins 1000)}}Rich{{else}}{{#if (gte game.coins 100)}}Comfortable{{else}}Poor{{/if}}{{/if}}"
+  - "=== LOGICAL OPERATIONS ==="
+  - "Combat ready: {{and (gt player.stats.health 50) (hasFlag 'tutorial_complete')}}"
+  - "Needs supplies: {{or (lt (length inventory) 2) (lt game.coins 50)}}"
+  - "Not a beginner: {{not (lt player.level 3)}}"
+  - "=== COMPLEX CONDITIONS ==="
+  - "Party leadership: {{#if (and (gte player.level (max (pluck party 'level'))) (gt player.stats.intelligence 12))}}Natural Leader{{else}}Team Member{{/if}}"
+  - "Equipment quality: {{#if (and (gte player.equipment.weapon.damage 20) (gte player.equipment.armor.defense 15))}}Well Equipped{{else}}Needs Upgrades{{/if}}"
+  - "Social standing: {{#if (gt (average (pluck party 'relationship')) 60)}}Popular{{else}}{{#if (gt (average (pluck party 'relationship')) 40)}}Accepted{{else}}Outsider{{/if}}{{/if}}"
+  - text: "Logic circuits complete! What's next?"
+    choices:
+      - text: "🎮 See VN-Specific Features"
+        goto: vn_showcase
+      - text: "🔙 Back to Menu"
+        goto: helper_showcase
+
+vn_showcase:
+  - speaker: "VN Engine"
+    say: "Time to explore visual novel specific features!"
+  - actions:
+      - type: setFlag
+        flag: demo_flag
+      - type: setVar
+        key: game.time
+        value: "{{add game.time 60}}"
+  - "=== STORY FLAGS ==="
+  - "Tutorial complete: {{hasFlag 'tutorial_complete'}}"
+  - "Demo flag: {{hasFlag 'demo_flag'}}"
+  - "Academy visited: {{#hasFlag 'visited_academy'}}✅ Yes{{else}}❌ No{{/hasFlag}}"
+  - "=== VARIABLE ACCESS ==="
+  - "Direct name access: {{player.name}}"
+  - "Safe fallback: {{getVar 'player.missing.value' 'Default'}}"
+  - "Nested stats: HP {{player.stats.health}}, MP {{player.stats.mana}}"
+  - "=== TIME SYSTEM ==="
+  - "Current game time: {{formatTime game.time}}"
+  - "Debug timestamp: {{timestamp}}"
+  - actions:
+      - type: setVar
+        key: game.time
+        value: "{{add game.time 30}}"
+  - "After 30 minutes: {{formatTime game.time}}"
+  - "=== DEBUGGING ==="
+  - "{{debug player.stats 'Player Statistics'}}"
+  - text: "VN features demonstrated! Ready for the finale?"
+    choices:
+      - text: "🌟 Advanced Showcase"
+        goto: advanced_showcase
+      - text: "🔙 Back to Menu"
+        goto: helper_showcase
+
+advanced_showcase:
+  - speaker: "{{capitalize player.name}}"
+    say: "This is the ultimate test - a real scenario using multiple helper categories!"
+  - "{{formatTime game.time}} - {{game.location}}, Day {{game.day}}"
+  - actions:
+      - type: setVar
+        key: quest
+        value: { name: "The Crystal of Truth", difficulty: "Hard", reward: 1000, progress: 0 }
+  - speaker: "Quest Giver"
+    say: "{{#if (and (gte player.level 5) (hasFlag 'tutorial_complete'))}}You look capable! I have a quest for you.{{else}}You're not ready for this quest yet.{{/if}}"
+  - "Quest: {{quest.name}}"
+  - "Difficulty: {{quest.difficulty}} ({{ifx (eq quest.difficulty 'Hard') 'High risk, high reward!' 'Manageable challenge'}})"
+  - "Reward: {{quest.reward}} gold ({{add quest.reward game.coins}} total if completed)"
+  - "=== PARTY ASSESSMENT ==="
+  - "Party strength: {{sum (pluck party 'hp')}} HP total"
+  - "Average relationship: {{round (average (pluck party 'relationship')) 1}}/100"
+  - "Member names: {{join (pluck party 'name') ', '}}"
+  - "=== CALCULATIONS ==="
+  - "Success chance: {{clamp (add (multiply player.level 10) (divide (sum (pluck party 'hp')) 10)) 0 100}}%"
+  - "Time estimate: {{multiply (ifx (eq quest.difficulty 'Hard') 3 2) 60}} minutes"
+  - text: "{{#if (gte (add (multiply player.level 10) (average (pluck party 'relationship'))) 80)}}This party looks ready! What's your decision?{{else}}This might be challenging. Proceed?{{/if}}"
+    choices:
+      - text: "Accept Quest ({{ifx (gte player.level 5) 'Confident' 'Risky'}})"
+        actions:
+          - type: setVar
+            key: quest.progress
+            value: "{{add quest.progress 25}}"
+          - type: setFlag
+            flag: quest_accepted
+        goto: quest_complete
+      - text: "Decline for now"
+        goto: helper_showcase
+      - text: "View Helper Summary"
+        goto: helper_reference
+
+quest_complete:
+  - "🎉 QUEST COMPLETED! 🎉"
+  - actions:
+      - type: setVar
+        key: game.coins
+        value: "{{add game.coins 1000}}"
+      - type: setVar
+        key: player.level
+        value: "{{add player.level 1}}"
+      - type: setFlag
+        flag: crystal_of_truth_found
+  - "=== REWARDS SUMMARY ==="
+  - "New Level: {{player.level}} (Level up!)"
+  - "Gold earned: +{{quest.reward}} (Total: {{game.coins}})"
+  - "Quest completed at: {{formatTime game.time}}"
+  - "=== PARTY REACTIONS ==="
+  - "{{#each party}}{{name}}: {{#if (gt relationship 70)}}'Amazing work!'{{else}}'Well done!'{{/if}}{{#unless @last}} | {{/unless}}{{/each}}"
+  - "=== FINAL STATISTICS ==="
+  - "Total playtime: {{formatTime game.time}}"
+  - "Flags earned: {{#hasFlag 'tutorial_complete'}}Tutorial{{/hasFlag}}{{#hasFlag 'visited_academy'}}, Academy{{/hasFlag}}{{#hasFlag 'crystal_of_truth_found'}}, Crystal Quest{{/hasFlag}}"
+  - "Items collected: {{length inventory}}"
+  - "Party loyalty: {{round (average (pluck party 'relationship')) 1}}% average"
+  - text: "🌟 Congratulations! You've experienced the VN Engine helpers!"
+    choices:
+      - text: "🔄 Try Different Path"
+        goto: helper_showcase
+      - text: "📖 View Helper Summary"
+        goto: helper_reference
+
+helper_reference:
+  - "📚 VN ENGINE HELPER REFERENCE"
+  - "=== MATHEMATICAL HELPERS ==="
+  - "add, subtract, multiply, divide, min, max, round, ceil, floor, abs, random, clamp, average, percentage"
+  - "=== STRING PROCESSING ==="
+  - "uppercase, lowercase, capitalize, trim, truncate, replace, reverse, repeat, padStart, padEnd"
+  - "=== ARRAY OPERATIONS ==="
+  - "length, first, last, includes, unique, slice, join, reverse, pluck, take, concat"
+  - "=== LOGIC & COMPARISON ==="
+  - "eq, ne, gt, gte, lt, lte, and, or, not, isEmpty, ifx, contains"
+  - "=== VN-SPECIFIC ==="
+  - "hasFlag, playerChose, getVar, formatTime, debug, timestamp"
+  - "🎉 Complete helper system for powerful visual novel creation!"
+  - text: "Explore more?"
+    choices:
+      - text: "🔄 Return to Main Menu"
+        goto: helper_showcase
+      - text: "🌟 Run Advanced Demo Again"
+        goto: advanced_showcase

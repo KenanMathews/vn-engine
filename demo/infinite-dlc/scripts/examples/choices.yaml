@@ -1,0 +1,13 @@
+menu:
+  - text: "Choose your path:"
+    choices:
+      - text: "Go left"
+        goto: left_path
+      - text: "Go right"  
+        goto: right_path
+
+left_path:
+  - "You went left and found treasure!"
+  
+right_path:
+  - "You went right and met a dragon!"

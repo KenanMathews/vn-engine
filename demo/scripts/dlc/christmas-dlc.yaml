@@ -1,0 +1,349 @@
+# scripts/dlc/christmas-dlc.yaml
+# Holiday-themed DLC expansion for RPG Complete
+
+christmas_intro:
+  - "🎄 A magical snow begins to fall..."
+  - speaker: "Narrator"
+    say: "The air fills with the spirit of the winter festival!"
+  - actions:
+      - type: setFlag
+        flag: christmas_event_active
+      - type: setVar
+        key: holiday
+        value: { name: "Winter Festival", day: 1, gifts_collected: 0 }
+  - text: "A festive merchant approaches you with a warm smile!"
+    choices:
+      - text: "🎁 Learn about the Winter Festival"
+        goto: festival_explanation
+      - text: "🛍️ Visit the Holiday Market"
+        goto: holiday_market
+      - text: "❄️ Explore the Winter Wonderland"
+        goto: winter_exploration
+
+festival_explanation:
+  - speaker: "Festival Merchant"
+    say: "Welcome to our annual Winter Festival, brave {{player.name}}!"
+  - "The festival celebrates the spirit of giving and winter magic."
+  - "=== FESTIVAL ACTIVITIES ==="
+  - "🎁 Gift Collection Quest"
+  - "❄️ Ice Crystal Mining"
+  - "🔥 Warming Potion Brewing"
+  - "🎵 Carol Singing Competition"
+  - text: "Which activity interests you most?"
+    choices:
+      - text: "🎁 Start Gift Collection"
+        actions:
+          - type: setFlag
+            flag: gift_quest_started
+        goto: gift_collection_quest
+      - text: "❄️ Mine Ice Crystals"
+        goto: ice_crystal_mining
+      - text: "🛍️ Visit Holiday Market"
+        goto: holiday_market
+
+gift_collection_quest:
+  - speaker: "Gift Quest Giver"
+    say: "Help us collect gifts for the village children!"
+  - "Quest: Collect {{subtract 5 holiday.gifts_collected}} more gifts"
+  - "Current gifts: {{holiday.gifts_collected}}/5"
+  - actions:
+      - type: setVar
+        key: gift_locations
+        value: ["Forest Clearing", "Mountain Cave", "Frozen Lake", "Ancient Tree", "Magic Fountain"]
+  - text: "Where would you like to search for gifts?"
+    choices:
+      - text: "🌲 Search Forest Clearing"
+        condition: "{{not (playerChose 'Search Forest Clearing')}}"
+        actions:
+          - type: setVar
+            key: holiday.gifts_collected
+            value: "{{add holiday.gifts_collected 1}}"
+          - type: setVar
+            key: game.coins
+            value: "{{add game.coins 25}}"
+        goto: gift_found
+      - text: "🏔️ Explore Mountain Cave"
+        condition: "{{not (playerChose 'Explore Mountain Cave')}}"
+        actions:
+          - type: setVar
+            key: holiday.gifts_collected
+            value: "{{add holiday.gifts_collected 1}}"
+          - type: addToList
+            list: inventory
+            item: { name: "Ice Shard", type: "material", value: 50 }
+        goto: gift_found
+      - text: "🏆 Check Progress"
+        goto: gift_progress_check
+
+gift_found:
+  - "🎉 You found a beautifully wrapped gift!"
+  - "Gifts collected: {{holiday.gifts_collected}}/5"
+  - actions:
+      - type: setVar
+        key: player.experience
+        value: "{{add player.experience 15}}"
+  - if: "{{gte holiday.gifts_collected 5}}"
+    then:
+      - "🎊 Quest Complete! You've collected all the gifts!"
+      - actions:
+          - type: setFlag
+            flag: gift_quest_complete
+          - type: setVar
+            key: game.coins
+            value: "{{add game.coins 100}}"
+          - type: addToList
+            list: inventory
+            item: { name: "Festival Crown", type: "accessory", bonus: 10 }
+      - goto: festival_reward
+    else:
+      - text: "Continue searching for more gifts?"
+        choices:
+          - text: "Keep searching"
+            goto: gift_collection_quest
+          - text: "Take a break"
+            goto: holiday_market
+
+gift_progress_check:
+  - "=== GIFT COLLECTION PROGRESS ==="
+  - "Gifts found: {{holiday.gifts_collected}}/5"
+  - "Experience gained: {{multiply holiday.gifts_collected 15}} XP"
+  - "{{#hasFlag 'gift_quest_complete'}}🎊 Quest completed!{{else}}{{subtract 5 holiday.gifts_collected}} gifts remaining{{/hasFlag}}"
+  - text: "What next?"
+    choices:
+      - text: "Continue collecting"
+        condition: "{{lt holiday.gifts_collected 5}}"
+        goto: gift_collection_quest
+      - text: "Visit market"
+        goto: holiday_market
+      - text: "Claim reward"
+        condition: "{{hasFlag 'gift_quest_complete'}}"
+        goto: festival_reward
+
+holiday_market:
+  - speaker: "Holiday Merchant"
+    say: "Welcome to our special Winter Festival market!"
+  - "✨ Everything sparkles with winter magic! ✨"
+  - "Your coins: {{game.coins}}"
+  - "=== HOLIDAY ITEMS ==="
+  - "🧪 Warming Potion: 40 coins (Restores {{add 50 (multiply player.level 5)}} HP)"
+  - "❄️ Ice Blade: 120 coins ({{add 20 (multiply player.level 3)}} damage + frost effect)"
+  - "🎁 Mystery Gift Box: 80 coins (Random magical item)"
+  - "🔥 Flame Charm: 60 coins (+{{add 8 player.level}} fire resistance)"
+  - text: "What catches your eye?"
+    choices:
+      - text: "🧪 Warming Potion (40 coins)"
+        condition: "{{gte game.coins 40}}"
+        actions:
+          - type: setVar
+            key: game.coins
+            value: "{{subtract game.coins 40}}"
+          - type: addToList
+            list: inventory
+            item: { name: "Warming Potion", type: "consumable", healing: 55, effect: "warmth" }
+        goto: holiday_purchase
+      - text: "❄️ Ice Blade (120 coins)"
+        condition: "{{gte game.coins 120}}"
+        actions:
+          - type: setVar
+            key: game.coins
+            value: "{{subtract game.coins 120}}"
+          - type: addToList
+            list: inventory
+            item: { name: "Ice Blade", type: "weapon", damage: 23, effect: "frost" }
+        goto: holiday_purchase
+      - text: "🎁 Mystery Gift Box (80 coins)"
+        condition: "{{gte game.coins 80}}"
+        actions:
+          - type: setVar
+            key: game.coins
+            value: "{{subtract game.coins 80}}"
+          - type: setVar
+            key: mystery_item
+            value: "{{sample (array 'Snowflake Pendant' 'Frost Gloves' 'Winter Boots' 'Ice Crown')}}"
+          - type: addToList
+            list: inventory
+            item: { name: "{{mystery_item}}", type: "magical", bonus: 12 }
+        goto: mystery_gift_reveal
+      - text: "🚪 Leave market"
+        goto: winter_exploration
+
+holiday_purchase:
+  - speaker: "Holiday Merchant"
+    say: "Excellent choice! May it serve you well in your adventures!"
+  - "Coins remaining: {{game.coins}}"
+  - "Items in inventory: {{length inventory}}"
+  - text: "Continue shopping?"
+    choices:
+      - text: "Browse more items"
+        goto: holiday_market
+      - text: "Explore festival"
+        goto: winter_exploration
+
+mystery_gift_reveal:
+  - "🎁✨ You open the Mystery Gift Box... ✨🎁"
+  - "Inside you find: {{mystery_item}}!"
+  - "The item glows with magical winter energy!"
+  - actions:
+      - type: setVar
+        key: player.stats.intelligence
+        value: "{{add player.stats.intelligence 3}}"
+  - "The magic of the item increases your intelligence by 3!"
+  - text: "What a wonderful surprise!"
+    choices:
+      - text: "Buy another mystery box"
+        condition: "{{gte game.coins 80}}"
+        goto: holiday_market
+      - text: "Explore more"
+        goto: winter_exploration
+
+ice_crystal_mining:
+  - "❄️ You approach the mystical Ice Crystal Mine"
+  - speaker: "Crystal Miner"
+    say: "These crystals hold ancient winter magic!"
+  - "Mining requires skill and patience. Your level: {{player.level}}"
+  - "Success chance: {{clamp (add (multiply player.level 15) (multiply player.stats.strength 5)) 20 90}}%"
+  - actions:
+      - type: setVar
+        key: mining_roll
+        value: "{{randomInt 1 100}}"
+      - type: setVar
+        key: success_chance
+        value: "{{clamp (add (multiply player.level 15) (multiply player.stats.strength 5)) 20 90}}"
+  - if: "{{lte mining_roll success_chance}}"
+    then:
+      - "⛏️ Success! You carefully extract a perfect ice crystal!"
+      - actions:
+          - type: addToList
+            list: inventory
+            item: { name: "Perfect Ice Crystal", type: "gem", value: 150, magical: true }
+          - type: setVar
+            key: game.coins
+            value: "{{add game.coins 50}}"
+          - type: setVar
+            key: player.experience
+            value: "{{add player.experience 25}}"
+      - "You gain 25 experience and 50 coins!"
+    else:
+      - "💔 The crystal shatters as you try to extract it..."
+      - "But you still gain valuable mining experience!"
+      - actions:
+          - type: setVar
+            key: player.experience
+            value: "{{add player.experience 10}}"
+  - text: "Try mining again?"
+    choices:
+      - text: "⛏️ Mine another crystal"
+        goto: ice_crystal_mining
+      - text: "🎪 Return to festival"
+        goto: winter_exploration
+
+winter_exploration:
+  - "❄️ You wander through the magical winter landscape"
+  - "Snow-covered trees glisten in the moonlight, and the air sparkles with frost."
+  - actions:
+      - type: setVar
+        key: game.time
+        value: "{{add game.time 30}}"
+  - "Current time: {{formatTime game.time}}"
+  - "=== WINTER WONDERLAND ==="
+  - "Festival status: {{#hasFlag 'christmas_event_active'}}🎄 Active{{else}}❄️ Peaceful{{/hasFlag}}"
+  - "Gifts collected: {{holiday.gifts_collected}}/5"
+  - "Inventory: {{length inventory}} items"
+  - text: "The winter air fills you with wonder. Where to next?"
+    choices:
+      - text: "🎁 Continue gift quest"
+        condition: "{{and (hasFlag 'gift_quest_started') (lt holiday.gifts_collected 5)}}"
+        goto: gift_collection_quest
+      - text: "🛍️ Visit holiday market"
+        goto: holiday_market
+      - text: "⛏️ Try ice crystal mining"
+        goto: ice_crystal_mining
+      - text: "🎵 Join carol singing"
+        goto: carol_singing
+      - text: "🏠 Return to main adventure"
+        goto: christmas_conclusion
+
+carol_singing:
+  - "🎵 You join a group of cheerful villagers singing winter carols!"
+  - speaker: "Carol Leader"
+    say: "Your voice adds such warmth to our songs!"
+  - "The music fills the winter air with joy and magic."
+  - actions:
+      - type: setVar
+        key: singing_bonus
+        value: "{{add (randomInt 10 20) (multiply player.stats.intelligence 2)}}"
+      - type: setVar
+        key: game.coins
+        value: "{{add game.coins singing_bonus}}"
+      - type: setFlag
+        flag: participated_in_carols
+  - "Your musical performance earns you {{singing_bonus}} coins!"
+  - "The villagers cheer and thank you for spreading holiday cheer!"
+  - text: "The warmth of community fills your heart."
+    choices:
+      - text: "🎵 Sing another song"
+        goto: carol_singing
+      - text: "🎪 Explore more festival"
+        goto: winter_exploration
+
+festival_reward:
+  - "🎊 WINTER FESTIVAL COMPLETION! 🎊"
+  - speaker: "Festival Organizer"
+    say: "{{player.name}}, you've brought such joy to our festival!"
+  - "=== FESTIVAL ACHIEVEMENTS ==="
+  - "🎁 Gifts collected: {{holiday.gifts_collected}}/5"
+  - "{{#hasFlag 'participated_in_carols'}}🎵 Participated in carol singing{{/hasFlag}}"
+  - "💎 Items gained: {{length inventory}} total in inventory"
+  - "💰 Coins earned: Check your pouch!"
+  - "=== SPECIAL REWARDS ==="
+  - actions:
+      - type: setVar
+        key: festival_bonus
+        value: 200
+      - type: setVar
+        key: game.coins
+        value: "{{add game.coins festival_bonus}}"
+      - type: addToList
+        list: inventory
+        item: { name: "Winter Festival Trophy", type: "trophy", description: "Commemorates your festival participation", permanent: true }
+      - type: setFlag
+        flag: winter_festival_champion
+  - "🏆 Winter Festival Trophy awarded!"
+  - "💰 Festival bonus: {{festival_bonus}} coins!"
+  - "✨ Title unlocked: Winter Festival Champion!"
+  - text: "The festival concludes with fireworks and warm memories!"
+    choices:
+      - text: "🎆 Watch the fireworks finale"
+        goto: fireworks_finale
+      - text: "🏠 Return to main adventure"
+        goto: christmas_conclusion
+
+fireworks_finale:
+  - "🎆✨ GRAND FIREWORKS FINALE! ✨🎆"
+  - "The sky erupts in brilliant colors - red, gold, blue, and silver!"
+  - "Each burst lights up the winter landscape in magical hues."
+  - actions:
+      - type: setVar
+        key: game.time
+        value: "{{add game.time 60}}"
+  - "The villagers gasp and cheer at the spectacular display."
+  - "A sense of wonder and joy fills everyone's hearts."
+  - "As the final firework fades, the festival comes to a peaceful end."
+  - text: "What a magical experience!"
+    choices:
+      - text: "🏠 Return to main adventure"
+        goto: christmas_conclusion
+
+christmas_conclusion:
+  - "❄️ The Winter Festival draws to a close..."
+  - "You've experienced the magic of the holiday season!"
+  - "=== FINAL CHRISTMAS STATS ==="
+  - "Festival Champion: {{#hasFlag 'winter_festival_champion'}}🏆 Yes{{else}}❄️ Participated{{/hasFlag}}"
+  - "Total coins: {{game.coins}}"
+  - "Items collected: {{length inventory}}"
+  - "Experience gained: Countless magical memories!"
+  - "Time spent in winter wonderland: {{formatTime game.time}}"
+  - "🎄 Thank you for celebrating the Winter Festival! 🎄"
+  - "The holiday magic will stay with you on your continued adventures."
+  - speaker: "Narrator"
+    say: "And so, with hearts warmed by the spirit of giving and community, our hero continues their journey..."

@@ -1,0 +1,60 @@
+# File: templates/prequel_template.yaml  
+# Description: Events that happened before the main story
+
+dlc_origins_prologue:
+  - text: "Five years before the main events..."
+  - text: "The village of Millbrook was peaceful, unaware of the darkness gathering."
+  - speaker: "Young {{getVar 'player.name' 'Hero'}}"
+    text: "Master, why must I practice sword forms every day?"
+    actions:
+      - type: setVar
+        key: timeline
+        value: "five_years_ago"
+
+dlc_mentor_training:
+  - speaker: "Master Aldric"
+    text: "Because, young one, danger often comes when we least expect it."
+  - text: "As if summoned by his words, screams echo from the village square."
+  - speaker: "Master Aldric"
+    text: "It begins. Stay close and remember your training."
+    choices:
+      - text: "What's happening?"
+        goto: dlc_explanation_scene
+      - text: "I'm ready to fight!"
+        actions:
+          - type: setVar
+            key: personality.brave
+            value: true
+        goto: dlc_first_battle
+
+dlc_explanation_scene:
+  - speaker: "Master Aldric"
+    text: "The Shadow Cult. I hoped this day would never come."
+  - text: "He hands you a blessed sword."
+  - speaker: "Master Aldric"
+    text: "Your real training starts now."
+  - goto: dlc_first_battle
+
+dlc_first_battle:
+  - text: "You face your first real enemy - a cultist wreathed in dark energy."
+  - if: getVar('personality.brave')
+    then:
+      - text: "Your courage gives you strength. The cultist falls quickly."
+      - action:
+          type: addVar
+          key: combat.experience
+          value: 10
+    else:
+      - text: "Fear makes your hands shake, but determination sees you through."
+      - action:
+          type: addVar
+          key: combat.experience
+          value: 5
+  - speaker: "Master Aldric"
+    text: "Well done. But this is only the beginning of your journey."
+    actions:
+      - type: setFlag
+        flag: first_battle_won
+      - type: setVar
+        key: story.origin_revealed
+        value: true

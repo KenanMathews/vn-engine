@@ -1,0 +1,47 @@
+# File: templates/epilogue_template.yaml
+# Description: What happens after the main story ends
+
+dlc_years_later:
+  - text: "Ten years have passed since your great adventure..."
+  - if: hasFlag('saved_the_kingdom')
+    then:
+      - text: "The kingdom prospers under the peace you helped secure."
+      - goto: dlc_peaceful_epilogue
+    else:
+      - text: "The world still bears scars from the conflict."
+      - goto: dlc_rebuilding_epilogue
+
+dlc_peaceful_epilogue:
+  - text: "You tend a small garden behind your cottage, far from the chaos of courts and kingdoms."
+  - speaker: "Village Child"
+    text: "Tell us the story again! About how you defeated the dragon!"
+  - speaker: "{{getVar 'player.name' 'Hero'}}"
+    text: "Once upon a time, in a land much like this one..."
+    choices:
+      - text: "Tell the true story."
+        actions:
+          - type: setVar
+            key: epilogue.story_style
+            value: "honest"
+      - text: "Tell an embellished version."
+        actions:
+          - type: setVar
+            key: epilogue.story_style
+            value: "legendary"
+      - text: "Tell a gentler version for children."
+        actions:
+          - type: setVar
+            key: epilogue.story_style
+            value: "child_friendly"
+
+dlc_rebuilding_epilogue:
+  - text: "You work alongside others to rebuild what was lost."
+  - speaker: "Fellow Rebuilder"
+    text: "Thanks to your efforts, we might actually succeed."
+  - speaker: "{{getVar 'player.name' 'Hero'}}"
+    text: "Every small step forward matters."
+  - text: "Hope is a powerful thing, and you've given people plenty of it."
+    actions:
+      - type: setVar
+        key: epilogue.legacy
+        value: "hope_bringer"

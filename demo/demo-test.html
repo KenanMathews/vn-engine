@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VN Engine - Comprehensive Test Suite v1.1</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        padding: 30px;
+      }
+
+      .test-controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+      }
+
+      .control-group {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+      }
+
+      .control-group.dlc-group {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-color: #4fc3f7;
+      }
+
+      .control-group h3 {
+        color: #495057;
+        margin-bottom: 15px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .control-group.dlc-group h3 {
+        color: #1976d2;
+      }
+
+      .test-button {
+        width: 100%;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .test-button:last-child {
+        margin-bottom: 0;
+      }
+
+      .test-button.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .test-button.secondary {
+        background: #e9ecef;
+        color: #495057;
+        border: 2px solid #dee2e6;
+      }
+
+      .test-button.success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+      }
+
+      .test-button.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+      }
+
+      .test-button.dlc {
+        background: linear-gradient(135deg, #4fc3f7 0%, #9c27b0 100%);
+        color: white;
+      }
+
+      .test-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .test-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .status-bar {
+        background: #f1f3f4;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+      }
+
+      .status-bar.running {
+        border-left-color: #ffc107;
+        background: #fff3cd;
+      }
+
+      .status-bar.success {
+        border-left-color: #28a745;
+        background: #d4edda;
+      }
+
+      .status-bar.error {
+        border-left-color: #dc3545;
+        background: #f8d7da;
+      }
+
+      .test-progress {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar {
+        background: #e9ecef;
+        border-radius: 10px;
+        height: 8px;
+        flex: 1;
+        margin: 0 15px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: linear-gradient(90deg, #28a745, #20c997);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      .results-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 20px;
+        min-height: 600px;
+      }
+
+      .test-output-panel {
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel-header {
+        background: #495057;
+        color: white;
+        padding: 15px 20px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .test-output {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        max-height: 500px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        background: #2d3748;
+        color: #e2e8f0;
+      }
+
+      .test-summary-panel {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .summary-stats {
+        padding: 20px;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+      }
+
+      .stat-card:last-child {
+        margin-bottom: 0;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .stat-value.success { color: #28a745; }
+      .stat-value.danger { color: #dc3545; }
+      .stat-value.warning { color: #ffc107; }
+      .stat-value.info { color: #17a2b8; }
+
+      .stat-label {
+        color: #6c757d;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .test-categories {
+        max-height: 300px;
+        overflow-y: auto;
+        border-top: 1px solid #e9ecef;
+      }
+
+      .category-item {
+        padding: 12px 20px;
+        border-bottom: 1px solid #f1f3f4;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .category-item:last-child {
+        border-bottom: none;
+      }
+
+      .category-name {
+        font-weight: 600;
+        color: #495057;
+      }
+
+      .category-status {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        font-size: 12px;
+      }
+
+      .status-badge {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 10px;
+      }
+
+      .status-badge.success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-badge.danger {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .status-badge.warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .status-badge.running {
+        background: #cce5ff;
+        color: #004085;
+      }
+
+      .status-badge.dlc {
+        background: #e1f5fe;
+        color: #0277bd;
+      }
+
+      .loader {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .test-output::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .test-output::-webkit-scrollbar-track {
+        background: #4a5568;
+        border-radius: 4px;
+      }
+
+      .test-output::-webkit-scrollbar-thumb {
+        background: #718096;
+        border-radius: 4px;
+      }
+
+      .test-output::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+      }
+
+      .test-file-selector {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+
+      .test-file-selector h4 {
+        color: #1565c0;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+
+      .file-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+      }
+
+      .file-item {
+        background: white;
+        border: 2px solid #e3f2fd;
+        border-radius: 6px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      .file-item:hover {
+        border-color: #2196f3;
+        background: #f3e5f5;
+      }
+
+      .file-item.selected {
+        border-color: #4caf50;
+        background: #e8f5e8;
+      }
+
+      .file-item.error {
+        border-color: #f44336;
+        background: #ffebee;
+      }
+
+      .file-item.dlc {
+        border-color: #9c27b0;
+        background: linear-gradient(135deg, #f3e5f5 0%, #e1f5fe 100%);
+      }
+
+      .dlc-info {
+        background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 100%);
+        border: 1px solid #4fc3f7;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+
+      .dlc-info h4 {
+        color: #1976d2;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .upgrade-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        font-size: 12px;
+      }
+
+      .upgrade-stat {
+        background: white;
+        padding: 8px;
+        border-radius: 6px;
+        text-align: center;
+        border: 1px solid #e1f5fe;
+      }
+
+      .upgrade-stat-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1976d2;
+      }
+
+      .upgrade-stat-label {
+        color: #666;
+        font-size: 10px;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 1200px) {
+        .results-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .test-controls {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .main-content {
+          padding: 20px;
+        }
+
+        .test-controls {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .highlight {
+        background: #fff3cd;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #856404;
+        font-weight: 600;
+      }
+
+      .error-highlight {
+        background: #f8d7da;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #721c24;
+        font-weight: 600;
+      }
+
+      .success-highlight {
+        background: #d4edda;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #155724;
+        font-weight: 600;
+      }
+
+      .dlc-highlight {
+        background: #e1f5fe;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #0277bd;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🧪 VN Engine Test Suite v1.1</h1>
+        <p>YAML-Driven Comprehensive Testing Framework with DLC Support</p>
+      </div>
+
+      <div class="main-content">
+        <!-- Status Bar -->
+        <div id="status-bar" class="status-bar">
+          <div class="test-progress">
+            <span>Ready to run tests</span>
+            <div class="progress-bar">
+              <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <span id="progress-text">0/0</span>
+          </div>
+          <div id="status-text">Select test files and click "Run Selected Tests" to begin</div>
+        </div>
+
+        <!-- DLC Information Panel -->
+        <div id="dlc-info" class="dlc-info" style="display: none;">
+          <h4>🎮 DLC Upgrade Status</h4>
+          <div class="upgrade-stats" id="upgrade-stats">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Test File Selector -->
+        <div class="test-file-selector">
+          <h4>📁 Available Test Files</h4>
+          <div id="file-grid" class="file-grid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="test-controls">
+          <div class="control-group">
+            <h3>🚀 Quick Actions</h3>
+            <button id="run-selected-tests" class="test-button primary">
+              ▶️ Run Selected Tests
+            </button>
+            <button id="run-all-tests" class="test-button success">
+              🎯 Run All Tests
+            </button>
+            <button id="run-helper-validation" class="test-button secondary">
+              🔍 Helper Validation Only
+            </button>
+          </div>
+
+          <div class="control-group">
+            <h3>📊 Test Categories</h3>
+            <button id="run-basic-tests" class="test-button secondary">
+              📝 Basic Tests
+            </button>
+            <button id="run-advanced-tests" class="test-button secondary">
+              🎮 Advanced Tests
+            </button>
+            <button id="run-stress-tests" class="test-button warning">
+              ⚡ Stress Tests
+            </button>
+          </div>
+
+          <div class="control-group dlc-group">
+            <h3>🎮 DLC Testing</h3>
+            <button id="run-dlc-tests" class="test-button dlc">
+              📦 Programmatic DLC Tests
+            </button>
+            <button id="validate-dlc" class="test-button secondary">
+              🔍 Validate DLC Scripts
+            </button>
+            <button id="test-upgrade-scenarios" class="test-button secondary">
+              🧪 Test Upgrade Scenarios
+            </button>
+          </div>
+
+          <div class="control-group">
+            <h3>🛠️ Utilities</h3>
+            <button id="clear-output" class="test-button secondary">
+              🗑️ Clear Output
+            </button>
+            <button id="export-results" class="test-button secondary">
+              📤 Export Results
+            </button>
+            <button id="validate-test-files" class="test-button secondary">
+              ✅ Validate Test Files
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="results-grid">
+          <!-- Test Output Panel -->
+          <div class="test-output-panel">
+            <div class="panel-header">
+              <span>📄 Test Output</span>
+              <span id="output-status">Ready</span>
+            </div>
+            <div id="test-output" class="test-output">
+              <div style="text-align: center; color: #a0aec0; margin-top: 100px;">
+                <h3>🎭 VN Engine Test Suite v1.1</h3>
+                <p style="margin: 15px 0;">YAML-driven testing framework with DLC upgrade support</p>
+                <p><strong>Features:</strong></p>
+                <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
+                  <li>📁 Dynamic test file loading</li>
+                  <li>🎯 Category-based test organization</li>
+                  <li>📊 Real-time progress tracking</li>
+                  <li>🔍 Detailed error reporting</li>
+                  <li>🎮 DLC upgrade testing</li>
+                  <li>📦 Script validation</li>
+                  <li>💾 Export functionality</li>
+                </ul>
+                <p style="margin-top: 30px;"><em>Select test files above to begin testing</em></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Test Summary Panel -->
+          <div class="test-summary-panel">
+            <div class="panel-header">
+              <span>📈 Test Summary</span>
+              <span id="summary-status">Waiting</span>
+            </div>
+            
+            <div class="summary-stats">
+              <div class="stat-card">
+                <div id="total-tests" class="stat-value info">0</div>
+                <div class="stat-label">Total Tests</div>
+              </div>
+              
+              <div class="stat-card">
+                <div id="passed-tests" class="stat-value success">0</div>
+                <div class="stat-label">Passed</div>
+              </div>
+              
+              <div class="stat-card">
+                <div id="failed-tests" class="stat-value danger">0</div>
+                <div class="stat-label">Failed</div>
+              </div>
+              
+              <div class="stat-card">
+                <div id="success-rate" class="stat-value warning">0%</div>
+                <div class="stat-label">Success Rate</div>
+              </div>
+            </div>
+
+            <div id="test-categories" class="test-categories">
+              <div class="category-item">
+                <span class="category-name">No tests run yet</span>
+                <div class="category-status">
+                  <span class="status-badge warning">Waiting</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./demo-test.ts"></script>
+  </body>
+</html>

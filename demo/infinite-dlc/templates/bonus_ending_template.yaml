@@ -1,0 +1,63 @@
+# File: templates/bonus_ending_template.yaml
+# Description: Alternative ending based on player choices
+
+dlc_secret_ending_check:
+  - if: "and (hasFlag('collected_all_crystals')) (hasFlag('saved_the_sage')) (gte (getVar 'player.karma') 100)"
+    then:
+      - text: "As you approach the final chamber, the crystals in your possession begin to resonate."
+      - goto: dlc_crystal_awakening
+    else:
+      - text: "You enter the final chamber, but something feels incomplete..."
+      - goto: dlc_standard_path
+
+dlc_crystal_awakening:
+  - text: "The ancient crystals float from your pack, surrounding you with ethereal light."
+  - speaker: "Ancient Voice"
+    text: "Chosen one, you have proven worthy of the true power."
+  - text: "The sage you saved earlier materializes beside you."
+  - speaker: "Sage"
+    text: "With your pure heart and these crystals, you can reshape this world."
+    choices:
+      - text: "Use the power to heal the world."
+        actions:
+          - type: setVar
+            key: ending_type
+            value: "world_healer"
+        goto: dlc_healer_ending
+      - text: "Use the power to become a guardian."
+        actions:
+          - type: setVar
+            key: ending_type
+            value: "eternal_guardian"  
+        goto: dlc_guardian_ending
+      - text: "Reject the power and stay human."
+        actions:
+          - type: setVar
+            key: ending_type
+            value: "humble_hero"
+        goto: dlc_humble_ending
+
+dlc_healer_ending:
+  - text: "You channel the crystal's power into the wounded earth."
+  - text: "Across the land, withered forests bloom anew, poisoned rivers run clear, and the sick are made whole."
+  - speaker: "{{getVar 'player.name' 'Hero'}}"
+    text: "The world is healing. My work here is done."
+  - text: "Years later, bards sing of the hero who gave everything to save the world."
+
+dlc_guardian_ending:
+  - text: "You accept the crystal's power, feeling it transform your very essence."
+  - text: "You become an immortal guardian, watching over the world for centuries to come."
+  - speaker: "{{getVar 'player.name' 'Hero'}}"
+    text: "I will protect this world, no matter the cost."
+  - text: "Legend speaks of the eternal guardian who appears in times of greatest need."
+
+dlc_humble_ending:
+  - text: "You gently push the crystals away."
+  - speaker: "{{getVar 'player.name' 'Hero'}}"
+    text: "Power corrupts. I'd rather stay who I am."
+  - speaker: "Sage"
+    text: "Wisdom beyond your years. Perhaps this is why you were truly chosen."
+  - text: "You return home a hero, but more importantly, you return home as yourself."
+
+dlc_standard_path:
+  - text: "You proceed to the standard ending chamber."

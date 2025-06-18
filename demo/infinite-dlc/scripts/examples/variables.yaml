@@ -1,0 +1,10 @@
+start:
+  - "Testing variables..."
+  - actions:
+      - type: setVar
+        key: name
+        value: "Alice"
+      - type: setVar
+        key: score
+        value: 100
+  - "Hello {{name}}! Your score is {{score}}."

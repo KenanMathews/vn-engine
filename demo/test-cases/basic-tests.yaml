@@ -1,0 +1,188 @@
+# demo/test-cases/basic-tests.yaml
+# Basic functionality tests for VN Engine core features
+
+category: "Basic Functionality"
+description: "Tests core VN Engine features like dialogue, variables, and flags"
+priority: 1
+
+tests:
+  - name: "Simple Dialogue Flow"
+    description: "Tests basic dialogue rendering and continuation"
+    script: |
+      dialogue_test:
+        - "Hello, this is a test!"
+        - speaker: "System"
+          say: "Testing speaker dialogue."
+        - "Final message."
+    scene: "dialogue_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Hello, this is a test!"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          speaker: "System"
+          content: "Testing speaker dialogue."
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Final message."
+      - action: "continue"
+        expected:
+          type: "scene_complete"
+
+  - name: "Variable System"
+    description: "Tests variable setting and template rendering"
+    script: |
+      var_test:
+        - actions:
+            - type: setVar
+              key: player_name
+              value: "Alice"
+            - type: setVar
+              key: player_level
+              value: 5
+        - "Player: {{player_name}}, Level: {{player_level}}"
+        - actions:
+            - type: setVar
+              key: player_level
+              value: "{{add player_level 1}}"
+        - "New level: {{player_level}}"
+    scene: "var_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Player: Alice, Level: 5"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "New level: 6"
+    final_state:
+      variables:
+        player_name: "Alice"
+        player_level: 6
+
+  - name: "Story Flags"
+    description: "Tests flag setting and checking"
+    script: |
+      flag_test:
+        - actions:
+            - type: setFlag
+              flag: intro_complete
+            - type: setFlag
+              flag: met_alice
+        - "{{#hasFlag 'intro_complete'}}Intro was completed{{/hasFlag}}"
+        - "{{#hasFlag 'met_alice'}}You know Alice{{else}}You haven't met Alice{{/hasFlag}}"
+        - actions:
+            - type: removeFlag
+              flag: met_alice
+        - "{{#hasFlag 'met_alice'}}Still know Alice{{else}}Alice forgotten{{/hasFlag}}"
+    scene: "flag_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Intro was completed"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "You know Alice"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Alice forgotten"
+    final_state:
+      flags: ["intro_complete"]
+
+  - name: "Basic Choices"
+    description: "Tests choice presentation and selection"
+    script: |
+      choice_test:
+        - text: "Choose your path:"
+          choices:
+            - text: "Go left"
+              actions:
+                - type: setFlag
+                  flag: went_left
+              goto: left_result
+            - text: "Go right"
+              actions:
+                - type: setFlag
+                  flag: went_right
+              goto: right_result
+      left_result:
+        - "You went left!"
+      right_result:
+        - "You went right!"
+    scene: "choice_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "show_choices"
+          choices_count: 2
+      - action: "choice"
+        choice_index: 0
+        expected:
+          type: "display_dialogue"
+          content: "You went left!"
+    final_state:
+      flags: ["went_left"]
+
+  - name: "Conditional Logic"
+    description: "Tests if/then/else conditional statements"
+    script: |
+      conditional_test:
+        - actions:
+            - type: setVar
+              key: health
+              value: 75
+        - if: "{{gt health 50}}"
+          then:
+            - "You are healthy!"
+          else:
+            - "You need healing."
+        - if: "{{lt health 100}}"
+          then:
+            - "Not at full health."
+    scene: "conditional_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "You are healthy!"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Not at full health."
+
+  - name: "Template Helpers"
+    description: "Tests basic template helper functionality"
+    script: |
+      helper_test:
+        - actions:
+            - type: setVar
+              key: a
+              value: 10
+            - type: setVar
+              key: b
+              value: 5
+        - "Math: {{add a b}} + {{multiply a 2}} = {{add (add a b) (multiply a 2)}}"
+        - "Text: {{uppercase 'hello'}} and {{capitalize 'world'}}"
+        - "Logic: {{and true (gt a 5)}} and {{or false true}}"
+    scene: "helper_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Math: 15 + 20 = 35"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Text: HELLO and World"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Logic: true and true"

@@ -46,7 +46,14 @@ export default defineConfig(({ mode }) => {
     plugins: [
       dts({
         insertTypesEntry: true,
-        exclude: ['**/*.test.ts', '**/*.spec.ts', 'demo*', 'test*']
+        exclude: ['**/*.test.ts', '**/*.spec.ts', 'demo*', 'test*'],
+        rollupTypes: true,
+        beforeWriteFile: (filePath, content) => {
+          if (filePath.includes('VNEngine.d.ts')) {
+            return false;
+          }
+          return { filePath, content };
+        }
       })
     ],
     resolve: {
@@ -57,7 +64,7 @@ export default defineConfig(({ mode }) => {
     build: {
       lib: {
         entry: resolve(__dirname, 'src/index.ts'),
-        name: 'vn-engine',
+        name: 'VNEngine',
         fileName: 'vn-engine',
         formats: ['es', 'umd', 'cjs']
       },

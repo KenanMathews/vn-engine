@@ -1,48 +1,38 @@
-// src/core/helpers/array.ts
 import _ from 'lodash';
 
 export interface ArrayHelpers {
-  // Basic operations
   first<T>(arr: T[], n?: number): T | T[] | undefined;
   last<T>(arr: T[], n?: number): T | T[] | undefined;
   length(value: any): number;
   includes<T>(arr: T[], item: T): boolean;
   isEmpty(arr: any): boolean;
   
-  // Filtering and searching
   filter<T>(arr: T[], predicate: (item: T, index: number) => boolean): T[];
   find<T>(arr: T[], predicate: (item: T, index: number) => boolean): T | undefined;
   where<T>(arr: T[], properties: Partial<T>): T[];
   
-  // Transformation
   map<T, U>(arr: T[], iteratee: (item: T, index: number) => U): U[];
   pluck<T>(arr: T[], path: string): any[];
   join<T>(arr: T[], separator?: string): string;
   
-  // Grouping and partitioning
   groupBy<T>(arr: T[], iteratee: string | ((item: T) => any)): Record<string, T[]>;
   chunk<T>(arr: T[], size: number): T[][];
   
-  // Ordering
   unique<T>(arr: T[]): T[];
   shuffle<T>(arr: T[]): T[];
   
-  // Slicing and sampling
   slice<T>(arr: T[], start: number, end?: number): T[];
   take<T>(arr: T[], count: number): T[];
   sample<T>(arr: T[]): T | undefined;
   sampleSize<T>(arr: T[], n: number): T[];
   
-  // Array manipulation
   flatten<T>(arr: any[]): T[];
   reverse<T>(arr: T[]): T[];
   concat<T>(...arrays: (T | T[])[]): T[];
   
-  // Utility
   compact<T>(arr: (T | null | undefined | false | 0 | '')[]): T[];
   without<T>(arr: T[], ...values: T[]): T[];
   
-  // VN-specific helpers
   randomChoice<T>(arr: T[]): T | undefined;
   weightedChoice<T>(items: T[], weights: number[]): T | undefined;
   cycleNext<T>(arr: T[], currentIndex: number): T;
@@ -54,7 +44,6 @@ function isArrayLike(value: any): boolean {
 }
 
 export const arrayHelpers: ArrayHelpers = {
-  // Basic operations
   first<T>(arr: T[], n?: number): T | T[] | undefined {
     if (!isArrayLike(arr)) return undefined;
     return typeof n === 'number' ? _.take(arr, n) : _.head(arr);
@@ -77,7 +66,6 @@ export const arrayHelpers: ArrayHelpers = {
     return _.isEmpty(arr);
   },
 
-  // Filtering and searching
   filter<T>(arr: T[], predicate: (item: T, index: number) => boolean): T[] {
     return _.filter(arr, predicate);
   },
@@ -86,11 +74,10 @@ export const arrayHelpers: ArrayHelpers = {
     return _.find(arr, predicate);
   },
 
-  where<T>(arr: T[], properties: Partial<T>): T[] {
+  where<T>(arr: T[], properties: Partial<T>): T[] | any {
     return _.filter(arr, properties);
   },
 
-  // Transformation
   map<T, U>(arr: T[], iteratee: (item: T, index: number) => U): U[] {
     return _.map(arr, iteratee);
   },
@@ -104,7 +91,6 @@ export const arrayHelpers: ArrayHelpers = {
     return arr.join(separator);
   },
 
-  // Grouping and partitioning
   groupBy<T>(arr: T[], iteratee: string | ((item: T) => any)): Record<string, T[]> {
     return _.groupBy(arr, iteratee);
   },
@@ -113,7 +99,6 @@ export const arrayHelpers: ArrayHelpers = {
     return _.chunk(arr, Math.max(1, size));
   },
 
-  // Ordering
   unique<T>(arr: T[]): T[] {
     return _.uniq(arr);
   },
@@ -122,7 +107,6 @@ export const arrayHelpers: ArrayHelpers = {
     return _.shuffle([...arr]);
   },
 
-  // Slicing and sampling
   slice<T>(arr: T[], start: number, end?: number): T[] {
     return _.slice(arr, start, end);
   },
@@ -139,7 +123,6 @@ export const arrayHelpers: ArrayHelpers = {
     return _.sampleSize(arr, Math.max(0, n));
   },
 
-  // Array manipulation
   flatten<T>(arr: any[]): T[] {
     return _.flatten(arr);
   },
@@ -152,7 +135,6 @@ export const arrayHelpers: ArrayHelpers = {
     return _.concat([], ...arrays);
   },
 
-  // Utility
   compact<T>(arr: (T | null | undefined | false | 0 | '')[]): T[] {
     return _.compact(arr);
   },
@@ -161,7 +143,6 @@ export const arrayHelpers: ArrayHelpers = {
     return _.without(arr, ...values);
   },
 
-  // VN-specific helpers
   randomChoice<T>(arr: T[]): T | undefined {
     if (!Array.isArray(arr) || arr.length === 0) return undefined;
     return arr[Math.floor(Math.random() * arr.length)];
@@ -190,14 +171,12 @@ export const arrayHelpers: ArrayHelpers = {
     return arr[nextIndex];
   },
 
-  findByProperty<T>(arr: T[], property: string, value: any): T | undefined {
+  findByProperty<T>(arr: T[], property: string, value: any): T | any {
     return _.find(arr, { [property]: value });
   }
 };
 
-// Handlebars helper registration function
 export function registerArrayHelpers(handlebars: any) {
-  // Basic operations
   handlebars.registerHelper('first', (arr: any, n?: number) => arrayHelpers.first(arr, n));
   handlebars.registerHelper('last', (arr: any, n?: number) => arrayHelpers.last(arr, n));
   handlebars.registerHelper('length', (value: any) => arrayHelpers.length(value));
@@ -205,27 +184,21 @@ export function registerArrayHelpers(handlebars: any) {
   handlebars.registerHelper('includes', (arr: any, item: any) => arrayHelpers.includes(arr, item));
   handlebars.registerHelper('isEmpty', (arr: any) => arrayHelpers.isEmpty(arr));
 
-  // Filtering and searching
   handlebars.registerHelper('where', (arr: any, properties: any) => arrayHelpers.where(arr, properties));
   handlebars.registerHelper('pluck', (arr: any, path: string) => arrayHelpers.pluck(arr, path));
 
-  // Transformation
   handlebars.registerHelper('join', (arr: any, separator?: string) => arrayHelpers.join(arr, separator));
 
-  // Grouping
   handlebars.registerHelper('groupBy', (arr: any, iteratee: string) => arrayHelpers.groupBy(arr, iteratee));
   handlebars.registerHelper('chunk', (arr: any, size: number) => arrayHelpers.chunk(arr, size));
 
-  // Ordering
   handlebars.registerHelper('unique', (arr: any) => arrayHelpers.unique(arr));
   handlebars.registerHelper('shuffle', (arr: any) => arrayHelpers.shuffle(arr));
 
-  // Slicing and sampling
   handlebars.registerHelper('slice', (arr: any, start: number, end?: number) => arrayHelpers.slice(arr, start, end));
   handlebars.registerHelper('take', (arr: any, count: number) => arrayHelpers.take(arr, count));
   handlebars.registerHelper('sample', (arr: any) => arrayHelpers.sample(arr));
 
-  // Array manipulation
   handlebars.registerHelper('flatten', (arr: any) => arrayHelpers.flatten(arr));
   handlebars.registerHelper('reverse', (arr: any) => arrayHelpers.reverse(arr));
   handlebars.registerHelper('compact', (arr: any) => arrayHelpers.compact(arr));
@@ -234,25 +207,21 @@ export function registerArrayHelpers(handlebars: any) {
     return arrayHelpers.without(arr, ...valuesToRemove);
   });
 
-  // VN-specific helpers
   handlebars.registerHelper('randomChoice', (arr: any) => arrayHelpers.randomChoice(arr));
   handlebars.registerHelper('weightedChoice', (items: any, weights: any) => arrayHelpers.weightedChoice(items, weights));
   handlebars.registerHelper('cycleNext', (arr: any, currentIndex: any) => arrayHelpers.cycleNext(arr, currentIndex));
   handlebars.registerHelper('findByProperty', (arr: any, property: string, value: any) => 
     arrayHelpers.findByProperty(arr, property, value));
 
-  // Create array helper
   handlebars.registerHelper('array', (...args: any[]) => {
     const options = args.pop();
     return args;
   });
 
-  // Range helper for creating number arrays
   handlebars.registerHelper('range', (start: number, end?: number, step?: number) => {
     return _.range(start, end, step);
   });
 
-  // Times helper for repeating operations
   handlebars.registerHelper('times', function(n: number, options: any) {
     let result = '';
     for (let i = 0; i < n; i++) {

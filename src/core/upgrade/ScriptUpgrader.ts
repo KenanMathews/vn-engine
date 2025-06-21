@@ -32,7 +32,6 @@ export class ScriptUpgrader {
     dlcContent: string,
     options: ScriptUpgradeOptions = {}
   ): UpgradeResult {
-    // Set default options
     const upgradeOptions: Required<ScriptUpgradeOptions> = {
       mode: 'additive',
       namespace: '',
@@ -43,21 +42,18 @@ export class ScriptUpgrader {
     };
 
     try {
-      // Parse DLC content
       const dlcScenes = this.parseDLCContent(dlcContent);
       
-      // Apply namespace if specified
       const namespacedDlcScenes = upgradeOptions.namespace 
         ? this.applyNamespace(dlcScenes, upgradeOptions.namespace)
         : dlcScenes;
 
-      // Validate upgrade
       const validation = this.validateUpgrade(currentScenes, namespacedDlcScenes, upgradeOptions);
       
       if (!validation.valid) {
         return {
           success: false,
-          error: validation.errors[0], // Return first error
+          error: validation.errors[0],
           addedScenes: [],
           replacedScenes: [],
           totalScenes: currentScenes.length,
@@ -65,7 +61,6 @@ export class ScriptUpgrader {
         };
       }
 
-      // If dry run, return validation results without applying
       if (upgradeOptions.dryRun) {
         return {
           success: true,
@@ -76,23 +71,18 @@ export class ScriptUpgrader {
         };
       }
 
-      // Create backup before applying changes
       const backup = this.statePreserver.backup(currentScenes);
 
       try {
-        // Apply upgrade
         const mergedScenes = this.mergeScenes(currentScenes, namespacedDlcScenes, upgradeOptions);
         
-        // Load new scenes into script engine
         this.scriptEngine.loadScenes(mergedScenes);
 
-        // Restore execution state
         const stateRestoration = this.statePreserver.restoreExecutionState(mergedScenes);
         if (!stateRestoration.success) {
           throw new Error(`Failed to restore execution state: ${stateRestoration.message}`);
         }
 
-        // Success!
         return {
           success: true,
           addedScenes: this.getAddedScenes(currentScenes, namespacedDlcScenes, upgradeOptions),
@@ -102,7 +92,6 @@ export class ScriptUpgrader {
         };
 
       } catch (error) {
-        // Rollback on failure
         console.error('Upgrade failed, rolling back:', error);
         this.statePreserver.restore(backup);
         
@@ -135,22 +124,17 @@ export class ScriptUpgrader {
     dlcScenes: ParsedScene[],
     options: ScriptUpgradeOptions
   ): ValidationResult {
-    // Check scene conflicts
     const conflicts = this.validator.validateSceneConflicts(baseScenes, dlcScenes, options);
     
-    // Check scene references after merge
     const mergedScenes = this.mergeScenes(baseScenes, dlcScenes, options);
     const references = this.validator.validateSceneReferences(mergedScenes);
     
-    // Check current state validity
     const stateValidation = options.validateState 
       ? this.validator.validateCurrentState(mergedScenes)
       : { valid: true, issues: [] };
 
-    // Generate warnings
     const warnings = this.validator.generateWarnings(baseScenes, dlcScenes, options);
 
-    // Create error if validation failed
     const error = this.validator.createUpgradeError(conflicts, references, stateValidation);
     
     return {
@@ -180,7 +164,6 @@ export class ScriptUpgrader {
     return scenes.map(scene => ({
       ...scene,
       name: `${namespace}_${scene.name}`,
-      // Also update any internal references to use namespace
       instructions: this.updateInstructionReferences(scene.instructions, scenes.map(s => s.name), namespace)
     }));
   }
@@ -196,12 +179,10 @@ export class ScriptUpgrader {
     return instructions.map(instruction => {
       const updated = { ...instruction };
       
-      // Update jump targets
       if (instruction.type === 'jump' && originalSceneNames.includes(instruction.target)) {
         updated.target = `${namespace}_${instruction.target}`;
       }
       
-      // Update choice targets
       if (instruction.type === 'dialogue' && instruction.choices) {
         updated.choices = instruction.choices.map((choice: any) => ({
           ...choice,
@@ -211,7 +192,6 @@ export class ScriptUpgrader {
         }));
       }
       
-      // Update conditional instruction references
       if (instruction.type === 'conditional') {
         if (instruction.then) {
           updated.then = this.updateInstructionReferences(instruction.then, originalSceneNames, namespace);
@@ -234,14 +214,11 @@ export class ScriptUpgrader {
     options: ScriptUpgradeOptions
   ): ParsedScene[] {
     if (options.mode === 'additive') {
-      // Simple addition - all DLC scenes are new
       return [...baseScenes, ...dlcScenes];
     } else {
-      // Replace mode - replace allowed scenes, add new ones
       const dlcSceneNames = new Set(dlcScenes.map(s => s.name));
       const allowOverwrite = new Set(options.allowOverwrite || []);
       
-      // Filter out base scenes that will be replaced
       const filteredBaseScenes = baseScenes.filter(scene => 
         !dlcSceneNames.has(scene.name) || !allowOverwrite.has(scene.name)
       );

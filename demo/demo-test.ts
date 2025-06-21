@@ -1,11 +1,7 @@
-// demo-test.ts
-// VN Engine YAML-Driven Test Suite v1.1
-// Comprehensive testing framework with DLC upgrade support
 
 import { createVNEngine } from 'vn-engine'
 import type { ScriptUpgradeOptions, UpgradeResult, ValidationResult } from 'vn-engine'
 
-// ===== TYPE DEFINITIONS =====
 
 interface TestFile {
   name: string;
@@ -112,7 +108,6 @@ interface TestSummary {
   };
 }
 
-// ===== MAIN TEST FRAMEWORK CLASS =====
 
 export class YAMLTestFramework {
   private testFiles: TestFile[] = [];
@@ -126,7 +121,6 @@ export class YAMLTestFramework {
     validationsPassed: 0
   };
 
-  // UI Elements
   private fileGrid: HTMLElement;
   private testOutput: HTMLElement;
   private statusBar: HTMLElement;
@@ -162,7 +156,6 @@ export class YAMLTestFramework {
   }
 
   private setupEventListeners(): void {
-    // Main action buttons
     document.getElementById('run-selected-tests')?.addEventListener('click', () => {
       this.runSelectedTests();
     });
@@ -173,7 +166,6 @@ export class YAMLTestFramework {
       this.runHelperValidationOnly();
     });
     
-    // Category buttons
     document.getElementById('run-basic-tests')?.addEventListener('click', () => {
       this.runTestsByCategory('Basic Functionality');
     });
@@ -184,7 +176,6 @@ export class YAMLTestFramework {
       this.runTestsByCategory('Stress & Performance');
     });
     
-    // DLC testing buttons
     document.getElementById('run-dlc-tests')?.addEventListener('click', () => {
       this.runDLCTests();
     });
@@ -195,14 +186,12 @@ export class YAMLTestFramework {
       this.testUpgradeScenarios();
     });
     
-    // Utility buttons
     document.getElementById('clear-output')?.addEventListener('click', () => this.clearOutput());
     document.getElementById('export-results')?.addEventListener('click', () => this.exportResults());
     document.getElementById('validate-test-files')?.addEventListener('click', () => this.validateTestFiles());
   }
 
   private discoverTestFiles(): void {
-    // Define available test files including DLC test files
     this.testFiles = [
       {
         name: "Basic Tests",
@@ -236,7 +225,6 @@ export class YAMLTestFramework {
         priority: 4,
         loaded: false
       },
-      // DLC Test Files
       {
         name: "DLC Upgrade Tests",
         path: "test-cases/dlc-upgrade-tests.yaml",
@@ -272,7 +260,6 @@ export class YAMLTestFramework {
     this.checkFileAvailability();
   }
 
-  // Add new method to check file availability
   private async checkFileAvailability(): Promise<void> {
     for (const file of this.testFiles) {
       try {
@@ -322,7 +309,6 @@ export class YAMLTestFramework {
     this.renderFileGrid();
   }
 
-  // ===== TEST FILE LOADING =====
 
   private async loadTestFile(filePath: string): Promise<TestCategory> {
     try {
@@ -335,7 +321,6 @@ export class YAMLTestFramework {
       
       const yamlContent = await response.text();
       
-      // Parse YAML (basic parsing for this demo)
       const testData = this.parseYAML(yamlContent);
       
       const testFile = this.testFiles.find(f => f.path === filePath);
@@ -362,11 +347,8 @@ export class YAMLTestFramework {
   }
 
   private parseYAML(content: string): TestCategory {
-    // Simple YAML parser for demo purposes
-    // In production, use a proper YAML library
     
     try {
-      // Extract basic structure
       const lines = content.split('\n');
       let category = '';
       let description = '';
@@ -390,7 +372,6 @@ export class YAMLTestFramework {
         } else if (trimmed.startsWith('priority:')) {
           priority = parseInt(trimmed.split(': ')[1]);
         } else if (trimmed.includes('- name:')) {
-          // New test case
           if (currentTest) tests.push(currentTest);
           currentTest = {
             name: trimmed.split(': ')[1].replace(/['"]/g, ''),
@@ -404,7 +385,6 @@ export class YAMLTestFramework {
         } else if (currentTest && trimmed.startsWith('scene:')) {
           currentTest.scene = trimmed.split(': ')[1].replace(/['"]/g, '');
         }
-        // Note: This is a simplified parser. In production, use js-yaml or similar
       }
       
       if (currentTest) tests.push(currentTest);
@@ -416,7 +396,6 @@ export class YAMLTestFramework {
     }
   }
 
-  // ===== TEST EXECUTION =====
 
   private async runSelectedTests(): Promise<void> {
     if (this.selectedFiles.size === 0) {
@@ -439,7 +418,6 @@ export class YAMLTestFramework {
     await this.executeTestFiles(paths);
   }
 
-  // ===== DLC TESTING METHODS =====
 
   private async runDLCTests(): Promise<void> {
     this.updateStatus('running', 'Running DLC upgrade tests...');
@@ -449,10 +427,8 @@ export class YAMLTestFramework {
       this.log('🎮 VN ENGINE DLC UPGRADE TESTS');
       this.log('='.repeat(80));
       
-      // Reset DLC stats
       this.dlcStats = { upgradesPerformed: 0, scenesAdded: 0, validationsPassed: 0 };
       
-      // Run specific DLC test scenarios
       await this.testBasicUpgradeFlow();
       await this.testUpgradeValidation();
       await this.testUpgradeModes();
@@ -473,7 +449,6 @@ export class YAMLTestFramework {
     
     const vnEngine = createVNEngine();
     
-    // Load base script
     const baseScript = `
 base_scene:
   - "Welcome to the base game!"
@@ -487,7 +462,6 @@ base_scene:
     }
     this.log('   ✅ Base script loaded');
     
-    // Create DLC content
     const dlcContent = `
 dlc_scene:
   - "Welcome to the DLC!"
@@ -497,7 +471,6 @@ dlc_scene:
     
     this.log('   🔄 Attempting DLC upgrade...');
     
-    // Test upgrade
     const upgradeResult = vnEngine.upgradeScript(dlcContent, { mode: 'replace' });
     
     this.log(`   📊 Upgrade result: success=${upgradeResult.success}, addedScenes=${upgradeResult.addedScenes?.length || 0}`);
@@ -508,14 +481,12 @@ dlc_scene:
     
     this.log(`   ✅ DLC upgrade successful: ${upgradeResult.addedScenes.length} scenes added`);
     
-    // Update stats BEFORE verification
     const oldStats = { ...this.dlcStats };
     this.dlcStats.upgradesPerformed++;
     this.dlcStats.scenesAdded += upgradeResult.addedScenes.length;
     
     this.log(`   📊 Stats updated: ${JSON.stringify(oldStats)} -> ${JSON.stringify(this.dlcStats)}`);
     
-    // Verify scenes exist
     const sceneNames = vnEngine.getSceneNames();
     this.log(`   📝 Available scenes: ${sceneNames.join(', ')}`);
     
@@ -530,13 +501,11 @@ dlc_scene:
     
     const vnEngine = createVNEngine();
     
-    // Load base script
     vnEngine.loadScript('base: ["Base content"]');
     if (vnEngine.getError()) {
       throw new Error(`Base script loading failed: ${vnEngine.getError()}`);
     }
     
-    // Test validation of good DLC
     const goodDLC = 'good_dlc: ["Good DLC content"]';
     const validationResult = vnEngine.validateUpgrade(goodDLC, { mode: 'replace' });
     
@@ -546,7 +515,6 @@ dlc_scene:
     this.log('   ✅ Good DLC validation passed');
     this.dlcStats.validationsPassed++;
     
-    // Test validation of conflicting DLC
     const conflictingDLC = 'base: ["Conflicting content"]';
     const conflictValidation = vnEngine.validateUpgrade(conflictingDLC, { mode: 'replace' });
     
@@ -560,7 +528,6 @@ dlc_scene:
   private async testUpgradeModes(): Promise<void> {
     this.log('\n⚙️ Testing Upgrade Modes:');
     
-    // Test replace mode
     const vnEngine1 = createVNEngine();
     vnEngine1.loadScript('scene1: ["Original content"]');
     if (vnEngine1.getError()) {
@@ -575,7 +542,6 @@ dlc_scene:
     this.dlcStats.upgradesPerformed++;
     this.dlcStats.scenesAdded += replaceResult.addedScenes.length;
     
-    // Test replace mode
     const vnEngine2 = createVNEngine();
     vnEngine2.loadScript('scene1: ["Original content"]');
     if (vnEngine2.getError()) {
@@ -640,7 +606,6 @@ another_scene:
       throw new Error(`Base script loading failed: ${vnEngine.getError()}`);
     }
     
-    // Test unauthorized overwrite prevention
     const conflictResult = vnEngine.upgradeScript('conflict_scene: ["New content"]', { mode: 'replace' });
     if (conflictResult.success || conflictResult.error?.code !== 'UNAUTHORIZED_OVERWRITE') {
       throw new Error('Should prevent unauthorized overwrites in replace mode');
@@ -648,7 +613,6 @@ another_scene:
     this.log('   ✅ Unauthorized overwrite correctly prevented');
     this.dlcStats.validationsPassed++;
     
-    // Test authorized overwrite
     const authorizedResult = vnEngine.upgradeScript('conflict_scene: ["Authorized content"]', { 
       mode: 'replace',
       allowOverwrite: ['conflict_scene']
@@ -676,21 +640,17 @@ another_scene:
         this.log(`\n📦 Validating: ${dlcFile.name}`);
         
         try {
-          // Load base script
           const baseResponse = await fetch(dlcFile.baseScript!);
           if (!baseResponse.ok) throw new Error(`Cannot load base script: ${dlcFile.baseScript}`);
           const baseContent = await baseResponse.text();
           
-          // Load DLC script
           const dlcResponse = await fetch(dlcFile.path);
           if (!dlcResponse.ok) throw new Error(`Cannot load DLC script: ${dlcFile.path}`);
           const dlcContent = await dlcResponse.text();
           
-          // Create engine and load base
           const vnEngine = createVNEngine();
           vnEngine.loadScript(baseContent);
           
-          // Validate DLC
           const validation = vnEngine.validateUpgrade(dlcContent, { 
             mode: 'replace',
             namespace: 'dlc'
@@ -733,7 +693,6 @@ another_scene:
       this.log('🧪 UPGRADE SCENARIO TESTING');
       this.log('='.repeat(80));
       
-      // Test various upgrade scenarios
       await this.testScenario('Basic Addition', this.createBasicAdditionScenario());
       await this.testScenario('Content Replacement', this.createReplacementScenario());
       await this.testScenario('Complex Integration', this.createComplexIntegrationScenario());
@@ -830,7 +789,6 @@ dlc_scene2:
       const vnEngine = createVNEngine();
       vnEngine.loadScript('existing: ["Existing content"]');
       
-      // This should fail in replace mode
       const result = vnEngine.upgradeScript('existing: ["Conflicting content"]', { mode: 'replace' });
       
       return !result.success && result.error?.code === 'UNAUTHORIZED_OVERWRITE';
@@ -856,7 +814,6 @@ dlc_scene2:
     `;
   }
 
-  // ===== CONTINUE WITH EXISTING METHODS =====
 
   private async executeTestFiles(filePaths: string[]): Promise<void> {
     if (this.isRunning) {
@@ -875,7 +832,6 @@ dlc_scene2:
       this.log('🚀 VN ENGINE YAML TEST SUITE v1.1');
       this.log('='.repeat(80));
       
-      // Load test files
       const categories: TestCategory[] = [];
       for (const filePath of filePaths) {
         try {
@@ -883,7 +839,6 @@ dlc_scene2:
           categories.push(category);
           this.loadedCategories.set(category.category, category);
         } catch (error) {
-          // Error already logged in loadTestFile
         }
       }
       
@@ -891,18 +846,15 @@ dlc_scene2:
         throw new Error('No test files could be loaded');
       }
       
-      // Execute tests
       let totalTests = 0;
       let completedTests = 0;
       
-      // Count total tests
       categories.forEach(category => {
         totalTests += category.tests.length;
       });
       
       this.updateProgress(0, totalTests);
       
-      // Run tests by category (sorted by priority)
       categories.sort((a, b) => a.priority - b.priority);
       
       for (const category of categories) {
@@ -941,7 +893,6 @@ dlc_scene2:
         }
       }
       
-      // Generate final report
       const duration = Date.now() - startTime;
       this.generateReport(duration);
       this.updateStatus('success', 'Tests completed');
@@ -970,17 +921,14 @@ dlc_scene2:
     try {
       const vnEngine = createVNEngine();
       
-      // Handle DLC tests
       if (testCase.dlc_tests) {
         for (let i = 0; i < testCase.dlc_tests.length; i++) {
           const dlcTest = testCase.dlc_tests[i];
           const stepResult = { stepIndex: i, passed: true };
           
           try {
-            // Load base script
             vnEngine.loadScript(dlcTest.base_script);
             
-            // Perform upgrade
             const upgradeResult = vnEngine.upgradeScript(dlcTest.dlc_content, dlcTest.upgrade_options || {});
             
             result.dlcUpgrades! += 1;
@@ -988,7 +936,6 @@ dlc_scene2:
               result.scenesAdded! += upgradeResult.addedScenes.length;
             }
             
-            // Validate expected results
             if (dlcTest.expected_result) {
               if (upgradeResult.success !== dlcTest.expected_result.success) {
                 throw new Error(`Expected success: ${dlcTest.expected_result.success}, got: ${upgradeResult.success}`);
@@ -1014,7 +961,6 @@ dlc_scene2:
         return result;
       }
       
-      // Handle template tests
       if (testCase.template_tests) {
         for (let i = 0; i < testCase.template_tests.length; i++) {
           const templateTest = testCase.template_tests[i];
@@ -1039,28 +985,23 @@ dlc_scene2:
         return result;
       }
       
-      // Handle script tests
       if (!testCase.script || !testCase.scene) {
         throw new Error('Test case missing script or scene');
       }
       
-      // Load script
       vnEngine.loadScript(testCase.script);
       if (vnEngine.getError()) {
         throw new Error(`Script loading failed: ${vnEngine.getError()}`);
       }
       
-      // Start scene
       let currentResult = vnEngine.startScene(testCase.scene);
       
-      // Execute steps
       if (testCase.steps) {
         for (let i = 0; i < testCase.steps.length; i++) {
           const step = testCase.steps[i];
           const stepResult = { stepIndex: i, passed: true };
           
           try {
-            // Execute step action
             switch (step.action) {
               case "continue":
                 currentResult = vnEngine.continue();
@@ -1072,12 +1013,10 @@ dlc_scene2:
                 currentResult = vnEngine.makeChoice(step.choice_index);
                 break;
               case "validate":
-                // Just validate current state
                 break;
               case "template":
                 if (step.template) {
                   const templateResult = vnEngine.parseTemplate(step.template);
-                  // Template validation logic here
                 }
                 break;
               case "upgrade":
@@ -1087,7 +1026,6 @@ dlc_scene2:
                   if (upgradeResult.success) {
                     result.scenesAdded! += upgradeResult.addedScenes.length;
                   }
-                  // Set currentResult to upgrade result for validation
                   currentResult = upgradeResult as any;
                 }
                 break;
@@ -1099,7 +1037,6 @@ dlc_scene2:
                 break;
             }
             
-            // Validate expectations
             if (step.expected) {
               this.validateStepExpectations(step.expected, currentResult, vnEngine, stepResult);
             }
@@ -1115,7 +1052,6 @@ dlc_scene2:
         }
       }
       
-      // Validate final state
       if (testCase.final_state) {
         this.validateFinalState(testCase.final_state, vnEngine, result);
       }
@@ -1150,7 +1086,6 @@ dlc_scene2:
       throw new Error(`Expected content to contain "${expected.contains}"`);
     }
     
-    // DLC-specific validations
     if (expected.success !== undefined && result.success !== expected.success) {
       throw new Error(`Expected success: ${expected.success}, got: ${result.success}`);
     }
@@ -1194,7 +1129,6 @@ dlc_scene2:
     return path.split(".").reduce((current, key) => current?.[key], obj);
   }
 
-  // ===== HELPER VALIDATION =====
 
   private async runHelperValidationOnly(): Promise<void> {
     this.updateStatus('running', 'Validating helpers...');
@@ -1289,7 +1223,6 @@ dlc_scene2:
     }
   }
 
-  // ===== REPORTING =====
 
   private generateReport(duration: number): void {
     const summary = this.calculateSummary(duration);
@@ -1305,7 +1238,6 @@ dlc_scene2:
     this.log(`   Success Rate: ${summary.successRate}%`);
     this.log(`   Duration: ${(duration / 1000).toFixed(2)}s`);
     
-    // DLC Stats
     if (summary.dlcStats && (summary.dlcStats.upgradesPerformed > 0 || summary.dlcStats.validationsPassed > 0)) {
       this.log(`\n🎮 DLC TESTING RESULTS:`);
       this.log(`   Upgrades Performed: ${summary.dlcStats.upgradesPerformed}`);
@@ -1313,14 +1245,12 @@ dlc_scene2:
       this.log(`   Validations Passed: ${summary.dlcStats.validationsPassed}`);
     }
     
-    // Category breakdown
     this.log(`\n📋 CATEGORY BREAKDOWN:`);
     Object.entries(summary.categories).forEach(([category, stats]) => {
       const rate = stats.total > 0 ? Math.round((stats.passed / stats.total) * 100) : 0;
       this.log(`   ${category}: ${stats.passed}/${stats.total} (${rate}%)`);
     });
     
-    // Failed tests detail
     if (summary.failedTests > 0) {
       this.log(`\n❌ FAILED TESTS:`);
       this.testResults.filter(r => !r.passed).forEach(result => {
@@ -1329,7 +1259,6 @@ dlc_scene2:
       });
     }
     
-    // Success message
     if (summary.failedTests === 0) {
       this.log(`\n🎉 EXCELLENT! All tests passed successfully!`);
       this.log(`   ✅ VN Engine is working perfectly`);
@@ -1344,7 +1273,6 @@ dlc_scene2:
     
     this.log('\n' + '='.repeat(80));
     
-    // Update UI
     this.updateSummaryUI(summary);
     this.updateDLCInfo();
   }
@@ -1369,7 +1297,6 @@ dlc_scene2:
       }
     });
     
-    // Calculate DLC stats from test results
     const dlcStats = {
       upgradesPerformed: this.dlcStats.upgradesPerformed + this.testResults.reduce((sum, r) => sum + (r.dlcUpgrades || 0), 0),
       scenesAdded: this.dlcStats.scenesAdded + this.testResults.reduce((sum, r) => sum + (r.scenesAdded || 0), 0),
@@ -1393,7 +1320,6 @@ dlc_scene2:
     this.failedTestsSpan.textContent = summary.failedTests.toString();
     this.successRateSpan.textContent = `${summary.successRate}%`;
     
-    // Update categories
     this.categoriesContainer.innerHTML = '';
     Object.entries(summary.categories).forEach(([category, stats]) => {
       const rate = stats.total > 0 ? Math.round((stats.passed / stats.total) * 100) : 0;
@@ -1413,7 +1339,6 @@ dlc_scene2:
     });
   }
 
-  // ===== UTILITY METHODS =====
 
   private updateStatus(type: 'ready' | 'running' | 'success' | 'error', message: string): void {
     this.statusBar.className = `status-bar ${type}`;
@@ -1433,7 +1358,6 @@ dlc_scene2:
     
     console.log(formattedMessage);
     
-    // Update UI
     const outputElement = this.testOutput;
     const line = document.createElement('div');
     line.textContent = formattedMessage;
@@ -1502,20 +1426,17 @@ dlc_scene2:
     }
     
     this.log(`\n📊 Validation complete: ${validFiles}/${totalFiles} files valid`);
-    this.renderFileGrid(); // Update UI with error states
+    this.renderFileGrid();
   }
 }
 
-// ===== INITIALIZATION =====
 
-// Initialize the test framework when DOM is ready
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
     new YAMLTestFramework();
   });
 }
 
-// Export for Node.js testing if needed
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { YAMLTestFramework };
 }

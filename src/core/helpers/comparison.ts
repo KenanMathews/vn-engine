@@ -1,7 +1,5 @@
-// src/core/helpers/comparison.ts
 
 export interface ComparisonHelpers {
-  // Basic comparisons
   eq(a: any, b: any): boolean;
   ne(a: any, b: any): boolean;
   gt(a: any, b: any): boolean;
@@ -9,27 +7,22 @@ export interface ComparisonHelpers {
   lt(a: any, b: any): boolean;
   lte(a: any, b: any): boolean;
   
-  // Logical operations
   and(...args: any[]): boolean;
   or(...args: any[]): boolean;
   not(value: any): boolean;
   
-  // Collection operations
   contains(collection: any, value: any): boolean;
   isEmpty(value: any): boolean;
   
-  // Type checking
   isString(value: any): boolean;
   isNumber(value: any): boolean;
   isArray(value: any): boolean;
   isObject(value: any): boolean;
   isBoolean(value: any): boolean;
   
-  // Advanced comparisons
   compare(a: any, operator: string, b: any): boolean;
   between(value: number, min: number, max: number): boolean;
   
-  // Utility
   ifx(condition: any, truthyValue: any, falsyValue: any): any;
   coalesce(...values: any[]): any;
   defaultTo(value: any, defaultValue: any): any;
@@ -51,7 +44,6 @@ function safeNumber(value: any, fallback: number = 0): number {
 }
 
 export const comparisonHelpers: ComparisonHelpers = {
-  // Basic comparisons
   eq(a: any, b: any): boolean {
     return a === b;
   },
@@ -76,7 +68,6 @@ export const comparisonHelpers: ComparisonHelpers = {
     return safeNumber(a) <= safeNumber(b);
   },
 
-  // Logical operations
   and(...args: any[]): boolean {
     return args.every(isTruthy);
   },
@@ -89,7 +80,6 @@ export const comparisonHelpers: ComparisonHelpers = {
     return !isTruthy(value);
   },
 
-  // Collection operations
   contains(collection: any, value: any): boolean {
     if (Array.isArray(collection)) return collection.includes(value);
     if (typeof collection === 'string') return collection.includes(value);
@@ -105,7 +95,6 @@ export const comparisonHelpers: ComparisonHelpers = {
     return false;
   },
 
-  // Type checking
   isString(value: any): boolean {
     return typeof value === 'string';
   },
@@ -126,7 +115,6 @@ export const comparisonHelpers: ComparisonHelpers = {
     return typeof value === 'boolean';
   },
 
-  // Advanced comparisons
   compare(a: any, operator: string, b: any): boolean {
     switch (operator) {
       case '==': case 'eq': return a == b;
@@ -151,7 +139,6 @@ export const comparisonHelpers: ComparisonHelpers = {
     return num >= minNum && num <= maxNum;
   },
 
-  // Utility
   ifx(condition: any, truthyValue: any, falsyValue: any): any {
     return isTruthy(condition) ? truthyValue : falsyValue;
   },
@@ -168,7 +155,6 @@ export const comparisonHelpers: ComparisonHelpers = {
   }
 };
 
-// Block helper utility for handlebars
 function createBlockHelper(helperFn: (...args: any[]) => boolean) {
   return function(...args: any[]) {
     const options = args[args.length - 1];
@@ -178,9 +164,7 @@ function createBlockHelper(helperFn: (...args: any[]) => boolean) {
   };
 }
 
-// Handlebars helper registration function
 export function registerComparisonHelpers(handlebars: any) {
-  // Basic comparisons (both inline and block)
   handlebars.registerHelper('eq', createBlockHelper(comparisonHelpers.eq));
   handlebars.registerHelper('ne', createBlockHelper(comparisonHelpers.ne));
   handlebars.registerHelper('gt', createBlockHelper(comparisonHelpers.gt));
@@ -188,36 +172,31 @@ export function registerComparisonHelpers(handlebars: any) {
   handlebars.registerHelper('lt', createBlockHelper(comparisonHelpers.lt));
   handlebars.registerHelper('lte', createBlockHelper(comparisonHelpers.lte));
   
-  // Logical operations
   handlebars.registerHelper('and', createBlockHelper(comparisonHelpers.and));
   handlebars.registerHelper('or', createBlockHelper(comparisonHelpers.or));
   handlebars.registerHelper('not', createBlockHelper(comparisonHelpers.not));
   
-  // Collection/string operations
   handlebars.registerHelper('contains', createBlockHelper(comparisonHelpers.contains));
   handlebars.registerHelper('isEmpty', createBlockHelper(comparisonHelpers.isEmpty));
   
-  // Type checking (inline only - no block form needed)
   handlebars.registerHelper('isString', (value: any) => comparisonHelpers.isString(value));
   handlebars.registerHelper('isNumber', (value: any) => comparisonHelpers.isNumber(value));
   handlebars.registerHelper('isArray', (value: any) => comparisonHelpers.isArray(value));
   handlebars.registerHelper('isObject', (value: any) => comparisonHelpers.isObject(value));
   handlebars.registerHelper('isBoolean', (value: any) => comparisonHelpers.isBoolean(value));
   
-  // Advanced comparison
-  handlebars.registerHelper('compare', function(a: any, operator: string, b: any, options: any) {
+  handlebars.registerHelper('compare', function(this: unknown, a: any, operator: string, b: any, options: any) {
     const result = comparisonHelpers.compare(a, operator, b);
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  handlebars.registerHelper('between', function(value: any, min: any, max: any, options: any) {
+  handlebars.registerHelper('between', function(this: any, value: any, min: any, max: any, options: any) {
     const result = comparisonHelpers.between(value, min, max);
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  // Utility helpers
   handlebars.registerHelper('ifx', comparisonHelpers.ifx);
-  handlebars.registerHelper('ternary', comparisonHelpers.ifx); // Alias
+  handlebars.registerHelper('ternary', comparisonHelpers.ifx);
   
   handlebars.registerHelper('coalesce', function(...args: any[]) {
     const options = args.pop();
@@ -229,14 +208,13 @@ export function registerComparisonHelpers(handlebars: any) {
     return comparisonHelpers.defaultTo(args[0], args[1]);
   });
   
-  // Weak equality helpers for flexibility
-  handlebars.registerHelper('eqw', function(a: any, b: any, options: any) {
-    const result = a == b; // Intentional weak equality
+  handlebars.registerHelper('eqw', function(this: any, a: any, b: any, options: any) {
+    const result = a == b;
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  handlebars.registerHelper('neqw', function(a: any, b: any, options: any) {
-    const result = a != b; // Intentional weak inequality
+  handlebars.registerHelper('neqw', function(this: any, a: any, b: any, options: any) {
+    const result = a != b;
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
 }

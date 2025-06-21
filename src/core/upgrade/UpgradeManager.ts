@@ -41,14 +41,12 @@ export class UpgradeManager {
    * Upgrade script with DLC content
    */
   upgradeScript(content: string, options: ScriptUpgradeOptions = {}): UpgradeResult {
-    // Emit upgrade started event
     this.events.emit('upgradeStarted', { options });
 
     try {
       const result = this.upgrader.upgrade(this.currentScenes, content, options);
       
       if (result.success) {
-        // Update current scenes if upgrade succeeded
         const mergedScenes = this.getMergedScenes(content, options);
         if (mergedScenes) {
           this.currentScenes = mergedScenes;
@@ -86,10 +84,8 @@ export class UpgradeManager {
    */
   validateUpgrade(content: string, options: ScriptUpgradeOptions = {}): ValidationResult {
     try {
-      // Parse DLC content
       const dlcScenes = this.scriptParser.parse(content, 'dlc.yaml');
       
-      // Apply namespace if specified
       const namespacedDlcScenes = options.namespace 
         ? this.applyNamespaceToScenes(dlcScenes, options.namespace)
         : dlcScenes;
@@ -160,7 +156,6 @@ export class UpgradeManager {
    * Check if any DLC content is loaded
    */
   hasDLCContent(): boolean {
-    // Simple heuristic: check for scenes with underscore prefixes
     return this.currentScenes.some(scene => scene.name.includes('_'));
   }
 
@@ -178,7 +173,6 @@ export class UpgradeManager {
     const estimatedDLCScenes = namespacedScenes.length;
     const baseScenes = totalScenes - estimatedDLCScenes;
     
-    // Extract unique namespaces
     const namespaces = [...new Set(
       namespacedScenes
         .map(scene => scene.name.split('_')[0])
@@ -237,7 +231,6 @@ export class UpgradeManager {
       if (options.mode === 'additive') {
         return [...this.currentScenes, ...namespacedDlcScenes];
       } else {
-        // Replace mode
         const dlcSceneNames = new Set(namespacedDlcScenes.map(s => s.name));
         const allowOverwrite = new Set(options.allowOverwrite || []);
         
@@ -260,7 +253,6 @@ export class UpgradeManager {
     return scenes.map(scene => ({
       ...scene,
       name: `${namespace}_${scene.name}`
-      // Note: Internal references would be updated by ScriptUpgrader
     }));
   }
 }

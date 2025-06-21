@@ -4,7 +4,6 @@ import dts from 'vite-plugin-dts'
 
 export default defineConfig(({ mode }) => {
   if (mode === 'demo') {
-    // Demo mode - for testing the library
     return {
       root: 'demo',
       resolve: {
@@ -24,11 +23,10 @@ export default defineConfig(({ mode }) => {
             entryFileNames: '[name].js',
             chunkFileNames: '[name]-[hash].js',
             assetFileNames: '[name]-[hash].[ext]',
-            format: 'iife', // Immediately Invoked Function Expression - works in browsers
-            name: 'VNEngineDemo' // Global variable name for the demo
+            format: 'iife',
+            name: 'VNEngineDemo'
           }
         },
-        // Don't minify for easier debugging
         minify: false,
         sourcemap: true
       },
@@ -36,21 +34,19 @@ export default defineConfig(({ mode }) => {
         allowedHosts: [
           'localhost',
           '127.0.0.1',
-          '.serveo.net',  // Allow all serveo.net subdomains
-          'vnengine.serveo.net'  // Specific subdomain if needed
+          '.serveo.net',
+          'vnengine.serveo.net'
         ]
       },
-      // Copy public assets (like your scripts/ folder)
       publicDir: resolve(__dirname, 'demo/public')
     }
   }
 
-  // Library build mode
   return {
     plugins: [
       dts({
         insertTypesEntry: true,
-        exclude: ['**/*.test.ts', '**/*.spec.ts', 'demo/**/*', 'test/**/*']
+        exclude: ['**/*.test.ts', '**/*.spec.ts', 'demo*', 'test*']
       })
     ],
     resolve: {
@@ -61,20 +57,23 @@ export default defineConfig(({ mode }) => {
     build: {
       lib: {
         entry: resolve(__dirname, 'src/index.ts'),
-        name: 'VNEngine',
+        name: 'vn-engine',
         fileName: 'vn-engine',
-        formats: ['es', 'umd']
+        formats: ['es', 'umd', 'cjs']
       },
       rollupOptions: {
-        external: ['handlebars', 'js-yaml', 'lodash'],
+        external: ['js-yaml', 'lodash', 'handlebars'],
         output: {
           globals: {
-            handlebars: 'Handlebars',
             'js-yaml': 'yaml',
-            lodash: '_',
+            'lodash': '_',
+            'handlebars': 'Handlebars'
           }
         }
       }
+    },
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
     }
   }
 })

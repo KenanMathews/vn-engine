@@ -27,13 +27,10 @@ export class StatePreserver {
    */
   restore(backup: BackupData): void {
     try {
-      // Restore scenes in script engine
       this.scriptEngine.loadScenes(backup.scenes);
       
-      // Restore game state
       this.gameState.deserialize(backup.gameState);
       
-      // Restore execution position
       this.gameState.setCurrentScene(backup.currentScene);
       this.gameState.setCurrentInstruction(backup.currentInstruction);
       
@@ -50,12 +47,10 @@ export class StatePreserver {
     const currentScene = this.gameState.getCurrentScene();
     const currentInstruction = this.gameState.getCurrentInstruction();
     
-    // If no current scene, position is valid (engine not started)
     if (!currentScene) {
       return { valid: true };
     }
     
-    // Check if current scene exists in new scenes
     const scene = newScenes.find(s => s.name === currentScene);
     if (!scene) {
       return { 
@@ -64,7 +59,6 @@ export class StatePreserver {
       };
     }
     
-    // Check if current instruction index is still valid
     if (currentInstruction >= scene.instructions.length) {
       return { 
         valid: false, 
@@ -88,8 +82,6 @@ export class StatePreserver {
       };
     }
     
-    // If validation passed, the state is already correctly set
-    // Just verify the script engine has the new scenes
     try {
       this.scriptEngine.loadScenes(newScenes);
       return { success: true };
@@ -107,7 +99,6 @@ export class StatePreserver {
   validateBackup(backup: BackupData): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
     
-    // Check backup structure
     if (!backup.scenes || !Array.isArray(backup.scenes)) {
       issues.push('Backup scenes are missing or invalid');
     }
@@ -128,7 +119,6 @@ export class StatePreserver {
       issues.push('Backup timestamp is missing or invalid');
     }
     
-    // Check if backup is too old (older than 1 hour)
     const oneHourAgo = Date.now() - (60 * 60 * 1000);
     if (backup.timestamp < oneHourAgo) {
       issues.push('Backup is older than 1 hour and may be stale');
@@ -164,12 +154,9 @@ export class StatePreserver {
    */
   private deepCloneScenes(scenes: ParsedScene[]): ParsedScene[] {
     try {
-      // Use JSON parse/stringify for deep cloning
-      // This works for ParsedScene structure which should be serializable
       return JSON.parse(JSON.stringify(scenes));
     } catch (error) {
       console.error('Failed to clone scenes, using shallow copy:', error);
-      // Fallback to shallow copy if JSON cloning fails
       return scenes.map(scene => ({ ...scene }));
     }
   }

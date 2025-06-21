@@ -1,15 +1,11 @@
-// src/core/helpers/math.ts
-// Math helpers for VN stats, calculations, and number operations
 
 export interface MathHelpers {
-  // Basic arithmetic
   add(a: number, b: number): number;
   subtract(a: number, b: number): number;
   multiply(a: number, b: number): number;
   divide(a: number, b: number): number;
   remainder(a: number, b: number): number;
   
-  // Mathematical functions
   abs(value: number): number;
   min(...values: number[]): number;
   max(...values: number[]): number;
@@ -17,16 +13,13 @@ export interface MathHelpers {
   ceil(value: number): number;
   floor(value: number): number;
   
-  // Random and utility
   random(min: number, max: number): number;
   randomInt(min: number, max: number): number;
   clamp(value: number, min: number, max: number): number;
   
-  // Array operations
   sum(values: number[]): number;
   average(values: number[]): number;
   
-  // VN-specific helpers
   percentage(value: number, total: number): number;
   statCheck(stat: number, difficulty: number): boolean;
   rollDice(sides: number, count?: number): number;
@@ -48,7 +41,6 @@ function safeArray(value: any): number[] {
 }
 
 export const mathHelpers: MathHelpers = {
-  // Basic arithmetic
   add(a: number, b: number): number {
     return safeNumber(a) + safeNumber(b);
   },
@@ -73,7 +65,6 @@ export const mathHelpers: MathHelpers = {
     return safeNumber(a) % divisor;
   },
 
-  // Mathematical functions
   abs(value: number): number {
     return Math.abs(safeNumber(value));
   },
@@ -102,7 +93,6 @@ export const mathHelpers: MathHelpers = {
     return Math.floor(safeNumber(value));
   },
 
-  // Random and utility
   random(min: number, max: number): number {
     const minNum = safeNumber(min);
     const maxNum = safeNumber(max);
@@ -122,7 +112,6 @@ export const mathHelpers: MathHelpers = {
     return Math.min(Math.max(num, minNum), maxNum);
   },
 
-  // Array operations
   sum(values: number[]): number {
     return safeArray(values).reduce((sum, num) => sum + num, 0);
   },
@@ -132,7 +121,6 @@ export const mathHelpers: MathHelpers = {
     return nums.length > 0 ? nums.reduce((sum, num) => sum + num, 0) / nums.length : 0;
   },
 
-  // VN-specific helpers
   percentage(value: number, total: number): number {
     const totalNum = safeNumber(total);
     if (totalNum === 0) return 0;
@@ -180,17 +168,14 @@ export const mathHelpers: MathHelpers = {
   }
 };
 
-// Handlebars helper registration function
 export function registerMathHelpers(handlebars: any) {
-  // Basic arithmetic
   handlebars.registerHelper('add', (a: any, b: any) => mathHelpers.add(a, b));
   handlebars.registerHelper('subtract', (a: any, b: any) => mathHelpers.subtract(a, b));
   handlebars.registerHelper('multiply', (a: any, b: any) => mathHelpers.multiply(a, b));
   handlebars.registerHelper('divide', (a: any, b: any) => mathHelpers.divide(a, b));
   handlebars.registerHelper('remainder', (a: any, b: any) => mathHelpers.remainder(a, b));
-  handlebars.registerHelper('mod', (a: any, b: any) => mathHelpers.remainder(a, b)); // Alias
+  handlebars.registerHelper('mod', (a: any, b: any) => mathHelpers.remainder(a, b));
   
-  // Mathematical functions
   handlebars.registerHelper('abs', (value: any) => mathHelpers.abs(value));
   handlebars.registerHelper('min', (...args: any[]) => {
     const values = args.slice(0, -1);
@@ -205,18 +190,15 @@ export function registerMathHelpers(handlebars: any) {
   handlebars.registerHelper('ceil', (value: any) => mathHelpers.ceil(value));
   handlebars.registerHelper('floor', (value: any) => mathHelpers.floor(value));
   
-  // Random and utility
   handlebars.registerHelper('random', (min: any, max: any) => mathHelpers.random(min, max));
   handlebars.registerHelper('randomInt', (min: any, max: any) => mathHelpers.randomInt(min, max));
   handlebars.registerHelper('clamp', (value: any, min: any, max: any) => mathHelpers.clamp(value, min, max));
   
-  // Array operations
   handlebars.registerHelper('sum', (values: any) => mathHelpers.sum(values));
   handlebars.registerHelper('average', (values: any) => mathHelpers.average(values));
   
-  // VN-specific helpers
   handlebars.registerHelper('percentage', (value: any, total: any) => mathHelpers.percentage(value, total));
-  handlebars.registerHelper('statCheck', function(stat: any, difficulty: any, options: any) {
+  handlebars.registerHelper('statCheck', function(this: any, stat: any, difficulty: any, options: any) {
     const result = mathHelpers.statCheck(stat, difficulty);
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
@@ -227,8 +209,7 @@ export function registerMathHelpers(handlebars: any) {
   handlebars.registerHelper('formatNumber', (value: any, decimals?: any) => 
     mathHelpers.formatNumber(value, decimals));
   
-  // Range checking helpers
-  handlebars.registerHelper('inRange', function(value: any, min: any, max: any, options: any) {
+  handlebars.registerHelper('inRange', function(this: any, value: any, min: any, max: any, options: any) {
     const num = safeNumber(value);
     const minNum = safeNumber(min);
     const maxNum = safeNumber(max);
@@ -237,13 +218,12 @@ export function registerMathHelpers(handlebars: any) {
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  // Even/odd helpers
-  handlebars.registerHelper('isEven', function(value: any, options: any) {
+  handlebars.registerHelper('isEven', function(this: any, value: any, options: any) {
     const result = safeNumber(value) % 2 === 0;
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  handlebars.registerHelper('isOdd', function(value: any, options: any) {
+  handlebars.registerHelper('isOdd', function(this: any, value: any, options: any) {
     const result = safeNumber(value) % 2 !== 0;
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });

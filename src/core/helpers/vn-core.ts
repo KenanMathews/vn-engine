@@ -1,31 +1,24 @@
-// src/core/helpers/vn-core.ts
-// Essential VN helpers for core visual novel functionality
 
 import type { ChoiceRecord, RenderableState } from '../../types';
 
 export interface VNHelpers {
-  // State management
   hasFlag(flagName: string, context: RenderableState): boolean;
   addFlag(flagName: string, context: RenderableState): void;
   removeFlag(flagName: string, context: RenderableState): void;
   toggleFlag(flagName: string, context: RenderableState): boolean;
   
-  // Variable management
   getVar(key: string, defaultValue?: any, context?: RenderableState): any;
   setVar(key: string, value: any, context: RenderableState): void;
   hasVar(key: string, context: RenderableState): boolean;
   incrementVar(key: string, amount: number, context: RenderableState): number;
   
-  // Choice history
   playerChose(choiceText: string, inScene?: string, context?: RenderableState): boolean;
   getLastChoice(context: RenderableState): ChoiceRecord | undefined;
   choiceCount(context: RenderableState): number;
   
-  // Utility functions
   formatTime(minutes: number): string;
   randomBool(probability?: number): boolean;
   
-  // Save/load state helpers
   exportFlags(context: RenderableState): string[];
   exportVariables(context: RenderableState): Record<string, any>;
 }
@@ -55,7 +48,6 @@ function safeNumber(value: any, fallback: number = 0): number {
 }
 
 export const vnHelpers: VNHelpers = {
-  // State management
   hasFlag(flagName: string, context: RenderableState): boolean {
     return context.storyFlags?.includes(flagName) || false;
   },
@@ -85,7 +77,6 @@ export const vnHelpers: VNHelpers = {
     }
   },
 
-  // Variable management
   getVar(key: string, defaultValue: any = undefined, context?: RenderableState): any {
     if (!context?.variables) return defaultValue;
     const value = getNestedValue(context.variables, key);
@@ -108,7 +99,6 @@ export const vnHelpers: VNHelpers = {
     return newValue;
   },
 
-  // Choice history
   playerChose(choiceText: string, inScene?: string, context?: RenderableState): boolean {
     if (!context?.choiceHistory) return false;
     return context.choiceHistory.some(choice => {
@@ -127,7 +117,6 @@ export const vnHelpers: VNHelpers = {
     return context.choiceHistory?.length || 0;
   },
 
-  // Utility functions
   formatTime(minutes: number): string {
     const totalMinutes = Math.floor(safeNumber(minutes));
     if (totalMinutes < 60) return `${totalMinutes}m`;
@@ -141,7 +130,6 @@ export const vnHelpers: VNHelpers = {
     return Math.random() < Math.max(0, Math.min(1, safeNumber(probability)));
   },
 
-  // Save/load state helpers
   exportFlags(context: RenderableState): string[] {
     return [...(context.storyFlags || [])];
   },
@@ -151,9 +139,7 @@ export const vnHelpers: VNHelpers = {
   }
 };
 
-// Handlebars helper registration function
 export function registerVNHelpers(handlebars: any) {
-  // State management helpers
   handlebars.registerHelper('hasFlag', function(flagName: string, options: any) {
     const context = options.data.root as RenderableState;
     const result = vnHelpers.hasFlag(flagName, context);
@@ -179,9 +165,7 @@ export function registerVNHelpers(handlebars: any) {
     return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
   });
 
-  // Variable management helpers
   handlebars.registerHelper('getVar', function(key: string, defaultValue: any, options: any) {
-    // Handle case where defaultValue is omitted
     if (typeof defaultValue === 'object' && defaultValue.fn) {
       options = defaultValue;
       defaultValue = undefined;
@@ -207,7 +191,6 @@ export function registerVNHelpers(handlebars: any) {
     return vnHelpers.incrementVar(key, amount, context);
   });
 
-  // Choice history helpers
   handlebars.registerHelper('playerChose', function(...args: any[]) {
     const options = args[args.length - 1];
     const choiceText = args[0];
@@ -228,11 +211,9 @@ export function registerVNHelpers(handlebars: any) {
     return vnHelpers.choiceCount(context);
   });
 
-  // Utility helpers
   handlebars.registerHelper('formatTime', (minutes: any) => vnHelpers.formatTime(minutes));
 
-  handlebars.registerHelper('randomBool', function(probability: any, options: any) {
-    // Handle case where probability is omitted
+  handlebars.registerHelper('randomBool', function(this: any, probability: any, options: any) {
     if (typeof probability === 'object' && probability.fn) {
       options = probability;
       probability = 0.5;
@@ -241,7 +222,6 @@ export function registerVNHelpers(handlebars: any) {
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
 
-  // Debug helper for development
   handlebars.registerHelper('debug', function(value: any, label?: string, options?: any) {
     if (typeof label === 'object') {
       options = label;
@@ -255,11 +235,9 @@ export function registerVNHelpers(handlebars: any) {
     return '';
   });
 
-  // Utility helpers
   handlebars.registerHelper('timestamp', () => Date.now());
   handlebars.registerHelper('currentDate', () => new Date().toLocaleDateString());
   handlebars.registerHelper('currentTime', () => new Date().toLocaleTimeString());
 }
 
-// Export utility functions for use elsewhere in the VN engine
 export { getNestedValue, setNestedValue };

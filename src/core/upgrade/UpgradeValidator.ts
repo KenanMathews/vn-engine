@@ -22,13 +22,11 @@ export class UpgradeValidator {
     const dlcSceneNames = dlcScenes.map(scene => scene.name);
     const allowOverwrite = new Set(options.allowOverwrite || []);
     
-    // Find conflicts
     const conflicts = dlcSceneNames.filter(name => baseSceneNames.has(name));
     
-    // In replace mode, check for unauthorized overwrites
     const unauthorizedOverwrites = options.mode === 'replace' 
       ? conflicts.filter(name => !allowOverwrite.has(name))
-      : conflicts; // In additive mode, all conflicts are unauthorized
+      : conflicts;
     
     return {
       hasConflicts: conflicts.length > 0,
@@ -75,13 +73,11 @@ export class UpgradeValidator {
     const issues: string[] = [];
     const sceneNames = new Set(newScenes.map(scene => scene.name));
     
-    // Check if current scene still exists
     const currentScene = this.gameState.getCurrentScene();
     if (currentScene && !sceneNames.has(currentScene)) {
       issues.push(`Current scene '${currentScene}' will no longer exist after upgrade`);
     }
     
-    // Check if current scene structure is still valid
     if (currentScene && sceneNames.has(currentScene)) {
       const scene = newScenes.find(s => s.name === currentScene);
       const currentInstruction = this.gameState.getCurrentInstruction();
@@ -108,13 +104,11 @@ export class UpgradeValidator {
     const errors: string[] = [];
     const details: UpgradeError['details'] = {};
     
-    // Handle conflicts
     if (conflicts.unauthorizedOverwrites.length > 0) {
       errors.push(`Cannot overwrite scenes: ${conflicts.unauthorizedOverwrites.join(', ')}`);
       details.unauthorizedOverwrites = conflicts.unauthorizedOverwrites;
     }
     
-    // Handle reference errors
     if (!references.valid) {
       if (references.invalidJumpTargets.length > 0) {
         errors.push(`Invalid jump targets: ${references.invalidJumpTargets.join(', ')}`);
@@ -129,7 +123,6 @@ export class UpgradeValidator {
       }
     }
     
-    // Handle state validation errors
     if (!stateValidation.valid) {
       errors.push(`Current game state would become invalid: ${stateValidation.issues.join(', ')}`);
       details.affectedState = stateValidation.issues;
@@ -139,7 +132,6 @@ export class UpgradeValidator {
       return null;
     }
     
-    // Determine primary error code
     let code: UpgradeError['code'] = 'SCENE_CONFLICT';
     if (details.unauthorizedOverwrites?.length) {
       code = 'UNAUTHORIZED_OVERWRITE';
@@ -215,7 +207,6 @@ export class UpgradeValidator {
   ): string[] {
     const warnings: string[] = [];
     
-    // Warn about namespace collisions after applying namespace
     if (options.namespace) {
       const namespacedNames = dlcScenes.map(scene => `${options.namespace}_${scene.name}`);
       const baseNames = new Set(baseScenes.map(scene => scene.name));
@@ -226,12 +217,10 @@ export class UpgradeValidator {
       }
     }
     
-    // Warn about large number of new scenes
     if (dlcScenes.length > 50) {
       warnings.push(`Adding ${dlcScenes.length} scenes - this is a large upgrade`);
     }
     
-    // Warn about potential performance impact
     const totalScenes = baseScenes.length + dlcScenes.length;
     if (totalScenes > 200) {
       warnings.push(`Total scenes after upgrade: ${totalScenes} - consider performance impact`);

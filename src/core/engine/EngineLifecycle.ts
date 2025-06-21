@@ -43,12 +43,11 @@ export class EngineLifecycle {
       const scenes = this.scriptParser.parse(content, fileName);
       this.scriptEngine.loadScenes(scenes);
 
-      // Update upgrade manager with current scenes
       this.upgradeManager.setCurrentScenes(scenes);
 
       this.isLoaded = true;
 
-      this.events.emit("loaded");
+      this.events.emit("loaded", undefined);
       this.events.emit("stateChange", null);
     } catch (error: any) {
       const errorMessage = error.message || "Unknown error";
@@ -150,10 +149,8 @@ export class EngineLifecycle {
     this.isLoaded = false;
     this.error = null;
 
-    // Reset game state
     this.gameState = new (this.gameState.constructor as any)();
 
-    // Clear upgrade manager scenes
     this.upgradeManager.setCurrentScenes([]);
 
     this.events.emit("stateChange", null);
@@ -176,7 +173,6 @@ export class EngineLifecycle {
     this.events.emit("error", error);
   }
 
-  // ===== UPGRADE UTILITY METHODS =====
 
   /**
    * Get all loaded scenes

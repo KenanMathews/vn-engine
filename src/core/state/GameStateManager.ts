@@ -1,4 +1,3 @@
-// src/core/state/GameStateManager.ts
 
 import type { GameState, SerializableGameState, ChoiceRecord } from '@/types'
 
@@ -52,34 +51,27 @@ export class GameStateManager {
     return this.state.variables.get(key)
   }
 
-  // FIXED: Handle nested variable addition properly
   addToVariable(key: string, value: number): void {
     if (key.includes('.')) {
-      // Handle nested keys like "player.level"
       const parts = key.split('.')
       const rootKey = parts[0]
       const nestedPath = parts.slice(1).join('.')
       
-      // Get or create root object
       let rootObj = this.getVariable(rootKey)
       if (!rootObj || typeof rootObj !== 'object') {
         rootObj = {}
       }
       
-      // Get current nested value and add to it
       const currentValue = this.getNestedProperty(rootObj, nestedPath) || 0
       this.setNestedProperty(rootObj, nestedPath, currentValue + value)
       
-      // Save back to variables
       this.setVariable(rootKey, rootObj)
     } else {
-      // Handle simple key
       const current = this.getVariable(key) || 0
       this.setVariable(key, current + value)
     }
   }
 
-  // FIXED: Helper method to get nested properties
   private getNestedProperty(obj: any, path: string): any {
     if (!obj || !path) return undefined
     
@@ -88,12 +80,10 @@ export class GameStateManager {
     }, obj)
   }
 
-  // FIXED: Helper method to set nested properties
   private setNestedProperty(obj: any, path: string, value: any): void {
     const parts = path.split('.')
     let current = obj
     
-    // Navigate to the parent of the target property
     for (let i = 0; i < parts.length - 1; i++) {
       if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
         current[parts[i]] = {}
@@ -101,7 +91,6 @@ export class GameStateManager {
       current = current[parts[i]]
     }
     
-    // Set the final property
     current[parts[parts.length - 1]] = value
   }
 
@@ -135,13 +124,10 @@ export class GameStateManager {
     this.setList(listName, list)
   }
 
-  // FIXED: Use consistent variable name for time tracking
   addTime(minutes: number): void {
-    // Use 'gameTime' as the standard variable name for consistency with templates
     const currentTime = this.getVariable('gameTime') || 0
     this.setVariable('gameTime', currentTime + minutes)
     
-    // Also set 'currentTime' for backward compatibility
     this.setVariable('currentTime', currentTime + minutes)
   }
 
@@ -150,7 +136,13 @@ export class GameStateManager {
   }
 
   getState(): GameState {
-    return { ...this.state }
+    return {
+      currentScene: this.state.currentScene,
+      currentInstruction: this.state.currentInstruction,
+      variables: new Map(this.state.variables),
+      storyFlags: new Set(this.state.storyFlags),
+      choiceHistory: [...this.state.choiceHistory]
+    }
   }
 
   serialize(): SerializableGameState {
@@ -166,12 +158,84 @@ export class GameStateManager {
   }
 
   deserialize(data: SerializableGameState): void {
+    try {
+      this.state = {
+        currentScene: data.currentScene || '',
+        currentInstruction: data.currentInstruction || 0,
+        variables: new Map(data.variables || []),
+        storyFlags: new Set(data.storyFlags || []),
+        choiceHistory: data.choiceHistory || []
+      }
+    } catch (error) {
+      console.error('Failed to deserialize game state:', error)
+      this.state = {
+        currentScene: '',
+        currentInstruction: 0,
+        variables: new Map(),
+        storyFlags: new Set(),
+        choiceHistory: []
+      }
+    }
+  }
+
+  setBulkVariables(variables: Record<string, any>): void {
+    try {
+      Object.entries(variables).forEach(([key, value]) => {
+        this.setVariable(key, value)
+      })
+    } catch (error) {
+      console.error('Error setting bulk variables:', error)
+    }
+  }
+
+  setBulkFlags(flags: string[]): void {
+    try {
+      flags.forEach(flag => {
+        if (typeof flag === 'string' && flag.length > 0) {
+          this.setStoryFlag(flag)
+        }
+      })
+    } catch (error) {
+      console.error('Error setting bulk flags:', error)
+    }
+  }
+
+  reset(): void {
     this.state = {
-      currentScene: data.currentScene || '',
-      currentInstruction: data.currentInstruction || 0,
-      variables: new Map(data.variables || []),
-      storyFlags: new Set(data.storyFlags || []),
-      choiceHistory: data.choiceHistory || []
+      currentScene: '',
+      currentInstruction: 0,
+      variables: new Map(),
+      storyFlags: new Set(),
+      choiceHistory: []
+    }
+  }
+
+  validateState(): { valid: boolean; errors: string[] } {
+    const errors: string[] = []
+
+    if (typeof this.state.currentScene !== 'string') {
+      errors.push('Current scene must be a string')
+    }
+
+    if (typeof this.state.currentInstruction !== 'number' || this.state.currentInstruction < 0) {
+      errors.push('Current instruction must be a non-negative number')
+    }
+
+    if (!(this.state.variables instanceof Map)) {
+      errors.push('Variables must be a Map')
+    }
+
+    if (!(this.state.storyFlags instanceof Set)) {
+      errors.push('Story flags must be a Set')
+    }
+
+    if (!Array.isArray(this.state.choiceHistory)) {
+      errors.push('Choice history must be an array')
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
     }
   }
 }

@@ -1,8 +1,6 @@
-// demo.ts - Clean, Content-Centric VN Engine Demo
 import { createVNEngine } from 'vn-engine'
 import type { ScriptUpgradeOptions, UpgradeResult } from 'vn-engine'
 
-// ===== DATA MODELS =====
 
 interface Script {
   id: string;
@@ -24,9 +22,7 @@ interface ValidationResult {
   message?: string;
 }
 
-// ===== SCRIPT LIBRARY =====
 const SCRIPT_LIBRARY: Script[] = [
-  // Featured Scripts
   {
     id: 'helper-showcase',
     name: 'Helper Showcase',
@@ -48,7 +44,6 @@ const SCRIPT_LIBRARY: Script[] = [
     features: ['Character Creation', 'Combat System', 'Inventory Management', 'Quest System']
   },
 
-  // Demo Scripts
   {
     id: 'basic-demo',
     name: 'Basic Demo',
@@ -60,7 +55,6 @@ const SCRIPT_LIBRARY: Script[] = [
     features: ['Basic Dialogue', 'Variables', 'Simple Choices']
   },
 
-  // Example Scripts
   {
     id: 'simple-example',
     name: 'Hello World',
@@ -92,7 +86,6 @@ const SCRIPT_LIBRARY: Script[] = [
     features: ['Choices', 'Branching', 'Navigation']
   },
 
-  // Advanced Scripts
   {
     id: 'advanced-helpers',
     name: 'Advanced Helpers',
@@ -104,7 +97,6 @@ const SCRIPT_LIBRARY: Script[] = [
     features: ['Complex Logic', 'Array Operations', 'Math Helpers']
   },
 
-  // DLC Scripts (can be added as DLC to compatible base scripts)
   {
     id: 'christmas-dlc',
     name: 'Winter Festival',
@@ -127,21 +119,18 @@ const SCRIPT_LIBRARY: Script[] = [
   }
 ];
 
-// DLC compatibility mapping
 const DLC_COMPATIBILITY: Record<string, string[]> = {
   'scripts/rpg-complete.yaml': ['christmas-dlc'],
   'scripts/basic-demo.yaml': ['bonus-content'],
   'scripts/showcase.yaml': ['christmas-dlc', 'bonus-content']
 };
 
-// ===== MAIN DEMO CLASS =====
 class VNEngineDemo {
-  private vnEngine = createVNEngine()
+  private vnEngine: Awaited<ReturnType<typeof createVNEngine>>
   private currentScript: Script | null = null
   private loadedDLCs: Set<string> = new Set()
   private validationCache: Map<string, ValidationResult> = new Map()
 
-  // UI Elements
   private gameContent: HTMLElement
   private gameState: HTMLElement
   private sceneSelect: HTMLSelectElement
@@ -152,12 +141,15 @@ class VNEngineDemo {
   private scriptName: HTMLElement
 
   constructor() {
+    this.initialize()
+    ;(window as any).demo = this
+  }
+
+  private async initialize(): Promise<void> {
+    this.vnEngine = await createVNEngine()
     this.initializeElements()
     this.setupEventListeners()
     this.updateUI()
-
-    // Make available globally
-    ;(window as any).demo = this
   }
 
   private initializeElements(): void {
@@ -172,7 +164,6 @@ class VNEngineDemo {
   }
 
   private setupEventListeners(): void {
-    // VN Engine events
     this.vnEngine.on('stateChange', () => {
       this.renderGame()
       this.renderGameState()
@@ -184,51 +175,42 @@ class VNEngineDemo {
       this.updateUI()
     })
 
-    // DLC events
     this.vnEngine.on('upgradeCompleted', (result) => {
       this.showNotification(`🎉 DLC installed! Added ${result.addedScenes.length} scenes`, 'success')
       this.updateSceneSelect()
       this.updateUI()
       this.renderGameState()
-      this.renderLibrary() // Refresh to show new state
+      this.renderLibrary()
     })
 
     this.vnEngine.on('upgradeFailed', (error) => {
       this.showNotification(`❌ DLC installation failed: ${error}`, 'error')
     })
 
-    // Header buttons
     document.getElementById('browse-library-btn')!.addEventListener('click', () => this.openLibrary())
     document.getElementById('edit-script-btn')!.addEventListener('click', () => this.toggleEditor(true))
 
-    // Game controls
     document.getElementById('start-scene-btn')!.addEventListener('click', () => this.startScene())
     document.getElementById('reset-btn')!.addEventListener('click', () => this.reset())
 
-    // Editor controls
     document.getElementById('load-from-editor-btn')!.addEventListener('click', () => this.loadFromEditor())
     document.getElementById('validate-btn')!.addEventListener('click', () => this.validateScript())
     document.getElementById('clear-btn')!.addEventListener('click', () => this.clearEditor())
 
-    // Editor toggle
     document.getElementById('editor-toggle-header')!.addEventListener('click', () => this.toggleEditor())
 
-    // Modal controls
     document.getElementById('close-library-modal')!.addEventListener('click', () => this.closeLibrary())
     this.libraryModal.addEventListener('click', (e) => {
       if (e.target === this.libraryModal) this.closeLibrary()
     })
 
-    // Search
     document.getElementById('library-search')!.addEventListener('input', (e) => {
       this.filterLibrary((e.target as HTMLInputElement).value)
     })
 
-    // Auto-resize textarea
     this.yamlEditor.addEventListener('input', () => this.autoResizeTextarea())
   }
 
-  // ===== LIBRARY MODAL =====
   private openLibrary(): void {
     this.renderLibrary()
     this.libraryModal.classList.add('active')
@@ -343,7 +325,6 @@ class VNEngineDemo {
     })
   }
 
-  // ===== DLC LOGIC =====
   private canAddAsDLC(script: Script): boolean {
     if (!this.currentScript) return false
     if (script.id === this.currentScript.id) return false
@@ -356,7 +337,6 @@ class VNEngineDemo {
     const script = SCRIPT_LIBRARY.find(s => s.id === scriptId)
     if (!script || !this.currentScript) return
 
-    // Set validating state
     this.validationCache.set(scriptId, {
       valid: false,
       status: 'validating',
@@ -425,7 +405,6 @@ class VNEngineDemo {
     }
   }
 
-  // ===== SCRIPT OPERATIONS =====
   public async loadScript(scriptId: string): Promise<void> {
     const script = SCRIPT_LIBRARY.find(s => s.id === scriptId)
     if (!script) {
@@ -441,10 +420,9 @@ class VNEngineDemo {
       this.yamlEditor.value = content
       this.autoResizeTextarea()
       
-      // Load into engine
       this.vnEngine.loadScript(content, script.path)
       this.currentScript = script
-      this.loadedDLCs.clear() // Reset DLC on new script
+      this.loadedDLCs.clear()
       this.validationCache.clear()
       
       this.closeLibrary()
@@ -469,7 +447,7 @@ class VNEngineDemo {
 
     try {
       this.vnEngine.loadScript(content, 'custom.yaml')
-      this.currentScript = null // Custom script
+      this.currentScript = null
       this.loadedDLCs.clear()
       this.validationCache.clear()
       this.showNotification('✅ Custom script loaded!', 'success')
@@ -486,10 +464,8 @@ class VNEngineDemo {
     }
 
     try {
-      // Basic validation by attempting to parse
       this.vnEngine.loadScript(content, 'validation.yaml')
       this.showNotification('✅ Script is valid!', 'success')
-      // Reset to previous state
       if (this.currentScript) {
         this.loadScript(this.currentScript.id)
       }
@@ -503,7 +479,6 @@ class VNEngineDemo {
     this.autoResizeTextarea()
   }
 
-  // ===== GAME OPERATIONS =====
   public startScene(): void {
     if (!this.vnEngine.getIsLoaded()) {
       this.showNotification('Please load a script first', 'error')
@@ -513,7 +488,6 @@ class VNEngineDemo {
     const selectedScene = this.sceneSelect.value
     
     if (!selectedScene) {
-      // Auto-start first scene
       const sceneNames = this.vnEngine.getSceneNames()
       if (sceneNames.length > 0) {
         this.vnEngine.startScene(sceneNames[0])
@@ -525,7 +499,6 @@ class VNEngineDemo {
       this.vnEngine.startScene(selectedScene)
     }
     
-    // Ensure game state updates immediately
     this.renderGameState()
   }
 
@@ -546,7 +519,6 @@ class VNEngineDemo {
     this.showNotification('🔄 Engine reset', 'info')
   }
 
-  // ===== UI CONTROLS =====
   private toggleEditor(forceOpen?: boolean): void {
     const content = document.getElementById('editor-toggle-content')!
     const header = document.getElementById('editor-toggle-header')!
@@ -564,7 +536,6 @@ class VNEngineDemo {
   }
 
   private updateUI(): void {
-    // Update status indicator
     if (this.vnEngine.getIsLoaded()) {
       this.statusDot.classList.add('loaded')
       this.scriptName.textContent = this.currentScript ? this.currentScript.name : 'Custom Script'
@@ -590,7 +561,6 @@ class VNEngineDemo {
         option.value = sceneName
         option.textContent = sceneName
         
-        // Mark DLC scenes
         if (sceneName.includes('_dlc') || sceneName.includes('winter') || sceneName.includes('secret')) {
           option.textContent += ' (DLC)'
           option.style.color = '#9c27b0'
@@ -602,7 +572,6 @@ class VNEngineDemo {
     }
   }
 
-  // ===== GAME RENDERING =====
   private renderGame(): void {
     const result = this.vnEngine.getCurrentResult()
     const error = this.vnEngine.getError()
@@ -631,7 +600,6 @@ class VNEngineDemo {
       return
     }
 
-    // Render game content based on result type
     switch (result.type) {
       case 'display_dialogue':
         this.renderDialogue(result)
@@ -721,11 +689,10 @@ class VNEngineDemo {
     const variablesObj = Object.fromEntries(gameState.variables || [])
     const sceneNames = this.vnEngine.getSceneNames()
     
-    // Format variables for display
     let variablesDisplay = ''
     if (Object.keys(variablesObj).length > 0) {
       variablesDisplay = Object.entries(variablesObj)
-        .slice(0, 5) // Show max 5 variables
+        .slice(0, 5)
         .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
         .join('<br>')
       if (Object.keys(variablesObj).length > 5) {
@@ -735,7 +702,6 @@ class VNEngineDemo {
       variablesDisplay = '<span style="opacity: 0.6;">none</span>'
     }
 
-    // Format story flags
     let flagsDisplay = ''
     if (gameState.storyFlags && gameState.storyFlags.length > 0) {
       flagsDisplay = gameState.storyFlags.slice(0, 3).join(', ')
@@ -784,7 +750,6 @@ class VNEngineDemo {
     `
   }
 
-  // ===== UTILITIES =====
   private formatContent(content: string): string {
     return content
       .replace(/=== (.+?) ===/g, '<h4 style="color: #667eea; margin: 8px 0;">$1</h4>')
@@ -811,12 +776,10 @@ class VNEngineDemo {
     
     document.getElementById('notifications')!.appendChild(notification)
     
-    // Auto-remove after 5 seconds
     setTimeout(() => notification.remove(), 5000)
   }
 }
 
-// ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
   new VNEngineDemo()
 })

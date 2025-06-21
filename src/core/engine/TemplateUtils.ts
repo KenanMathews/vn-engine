@@ -1,4 +1,3 @@
-// core/engine/TemplateUtils.ts
 
 import type { TemplateManager } from '../templates';
 import type { GameStateManager } from '../state';
@@ -31,6 +30,8 @@ export class TemplateUtils {
     const storyFlags = Array.from(gameState.storyFlags) as string[];
 
     return {
+      ...variables,
+      
       storyFlags,
       variables,
       choiceHistory: gameState.choiceHistory,
@@ -71,12 +72,12 @@ export class TemplateUtils {
       );
   }
 
-  // Utility methods for common template operations
   renderWithVariables(template: string, additionalVars: Record<string, any>): string {
     try {
       const context = this.createRenderContext();
       const extendedContext = {
         ...context,
+        ...additionalVars,
         variables: { ...context.variables, ...additionalVars }
       };
       return this.templateManager.render(template, extendedContext);
@@ -86,7 +87,6 @@ export class TemplateUtils {
     }
   }
 
-  // Check if a template would render successfully without actually rendering
   validateTemplate(template: string): { valid: boolean; error?: string } {
     try {
       this.parseTemplateStrict(template);

@@ -980,11 +980,17 @@ debug_scene:
   - "{{hasFlag 'nonexistent_flag'}}"               # Returns false safely
 ```
 
-### Building
+### Building & Testing Scripts
 ```bash
-npm run build      # Build library
-npm run dev        # Development mode  
-npm test          # Run tests
+npm run build           # Build the library
+npm run dev             # Start development server (for demo)
+npm test                # Run full test suite (core, performance, edge cases on packaged version)
+npm run type-check      # Check TypeScript types
+npm run test:core       # Run only core functionality tests
+npm run test:package    # Build library and run tests on the packaged version
+npm run package:test    # Dry run npm pack to check package contents
+npm run package:analyze # Build, pack, analyze package size, then cleanup
+npm run demo            # Run demo application
 ```
 
 ## 📦 Dependencies

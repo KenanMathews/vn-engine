@@ -62,7 +62,6 @@ export class ScriptParser {
 
   private parseInstruction(item: any, sourceLocation: SourceLocation): ScriptInstruction {
     if (typeof item === 'string') {
-      // Simple dialogue
       const instruction: DialogueInstruction = {
         type: 'dialogue',
         text: item,
@@ -72,7 +71,6 @@ export class ScriptParser {
     }
 
     if (typeof item === 'object' && item !== null) {
-      // Check for actions only
       if (item.action || item.actions) {
         const instruction: ActionInstruction = {
           type: 'action',
@@ -82,7 +80,6 @@ export class ScriptParser {
         return instruction
       }
 
-      // Check for conditional
       if (item.if) {
         const instruction: ConditionalInstruction = {
           type: 'conditional',
@@ -94,7 +91,6 @@ export class ScriptParser {
         return instruction
       }
 
-      // Check for jump
       if (item.goto || item.jump) {
         const instruction: JumpInstruction = {
           type: 'jump',
@@ -104,14 +100,13 @@ export class ScriptParser {
         return instruction
       }
 
-      // UNIFIED: Handle dialogue (with optional text, speaker, actions, choices)
       if (item.say || item.text || item.speaker || item.choices || item.choice) {
         const instruction: DialogueInstruction = {
           type: 'dialogue',
           speaker: item.speaker,
-          text: item.say || item.text,  // Can be undefined
+          text: item.say || item.text,
           actions: item.actions,
-          choices: item.choices || item.choice,  // Support both formats
+          choices: item.choices || item.choice,
           _sourceLocation: sourceLocation
         }
         return instruction

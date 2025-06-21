@@ -9,7 +9,6 @@ export class EventEmitter<TEvents extends Record<string, any>> {
     }
     this.listeners[event]!.push(callback);
 
-    // Return simple unsubscribe function
     return () => {
       const callbacks = this.listeners[event];
       if (callbacks) {

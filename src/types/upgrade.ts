@@ -1,4 +1,3 @@
-// types/upgrade.ts
 
 import type { ParsedScene } from './index';
 

@@ -1,15 +1,11 @@
-// src/core/helpers/string.ts
-// String helpers for VN text processing and formatting
 
 export interface StringHelpers {
-  // Case transformation
   uppercase(str: string): string;
   lowercase(str: string): string;
   capitalize(str: string): string;
   capitalizeFirst(str: string): string;
   titleCase(str: string): string;
   
-  // String manipulation
   trim(str: string): string;
   truncate(str: string, length: number, suffix?: string): string;
   ellipsis(str: string, length: number): string;
@@ -18,26 +14,21 @@ export interface StringHelpers {
   reverse(str: string): string;
   repeat(str: string, count: number): string;
   
-  // Padding and alignment
   padStart(str: string, length: number, padString?: string): string;
   padEnd(str: string, length: number, padString?: string): string;
   center(str: string, length: number): string;
   
-  // String testing
   startsWith(str: string, searchString: string): boolean;
   endsWith(str: string, searchString: string): boolean;
   includes(str: string, searchString: string): boolean;
   
-  // String extraction
   substring(str: string, start: number, end?: number): string;
   words(str: string, count?: number): string[];
   wordCount(str: string): number;
   
-  // Utility
   slugify(str: string): string;
   stripTags(str: string): string;
   
-  // VN-specific helpers
   typewriter(str: string, speed?: number): string;
   nameTag(name: string): string;
   dialogueFormat(speaker: string, text: string): string;
@@ -53,7 +44,6 @@ function safeString(value: any): string {
 }
 
 export const stringHelpers: StringHelpers = {
-  // Case transformation
   uppercase(str: string): string {
     return safeString(str).toUpperCase();
   },
@@ -78,7 +68,6 @@ export const stringHelpers: StringHelpers = {
     );
   },
 
-  // String manipulation
   trim(str: string): string {
     return safeString(str).trim();
   },
@@ -110,7 +99,6 @@ export const stringHelpers: StringHelpers = {
     return safeString(str).repeat(safeCount);
   },
 
-  // Padding and alignment
   padStart(str: string, length: number, padString: string = ' '): string {
     return safeString(str).padStart(length, padString);
   },
@@ -127,7 +115,6 @@ export const stringHelpers: StringHelpers = {
     return ' '.repeat(leftPadding) + s + ' '.repeat(rightPadding);
   },
 
-  // String testing
   startsWith(str: string, searchString: string): boolean {
     return safeString(str).startsWith(searchString);
   },
@@ -140,7 +127,6 @@ export const stringHelpers: StringHelpers = {
     return safeString(str).includes(searchString);
   },
 
-  // String extraction
   substring(str: string, start: number, end?: number): string {
     return safeString(str).substring(start, end);
   },
@@ -154,7 +140,6 @@ export const stringHelpers: StringHelpers = {
     return stringHelpers.words(str).length;
   },
 
-  // Utility
   slugify(str: string): string {
     return safeString(str)
       .toLowerCase()
@@ -168,9 +153,7 @@ export const stringHelpers: StringHelpers = {
     return safeString(str).replace(/<[^>]*>/g, '');
   },
 
-  // VN-specific helpers
   typewriter(str: string, speed: number = 50): string {
-    // Returns string with typewriter metadata for VN engines
     const s = safeString(str);
     return `<typewriter speed="${speed}">${s}</typewriter>`;
   },
@@ -218,16 +201,13 @@ export const stringHelpers: StringHelpers = {
   }
 };
 
-// Handlebars helper registration function
 export function registerStringHelpers(handlebars: any) {
-  // Case transformation
   handlebars.registerHelper('uppercase', (str: any) => stringHelpers.uppercase(str));
   handlebars.registerHelper('lowercase', (str: any) => stringHelpers.lowercase(str));
   handlebars.registerHelper('capitalize', (str: any) => stringHelpers.capitalize(str));
   handlebars.registerHelper('capitalizeFirst', (str: any) => stringHelpers.capitalizeFirst(str));
   handlebars.registerHelper('titleCase', (str: any) => stringHelpers.titleCase(str));
   
-  // String manipulation
   handlebars.registerHelper('trim', (str: any) => stringHelpers.trim(str));
   handlebars.registerHelper('truncate', (str: any, length: any, suffix?: any) => 
     stringHelpers.truncate(str, length, suffix));
@@ -238,40 +218,35 @@ export function registerStringHelpers(handlebars: any) {
   handlebars.registerHelper('reverse', (str: any) => stringHelpers.reverse(str));
   handlebars.registerHelper('repeat', (str: any, count: any) => stringHelpers.repeat(str, count));
   
-  // Padding and alignment
   handlebars.registerHelper('padStart', (str: any, length: any, padString?: any) => 
     stringHelpers.padStart(str, length, padString));
   handlebars.registerHelper('padEnd', (str: any, length: any, padString?: any) => 
     stringHelpers.padEnd(str, length, padString));
   handlebars.registerHelper('center', (str: any, length: any) => stringHelpers.center(str, length));
   
-  // String testing (block helpers)
-  handlebars.registerHelper('startsWith', function(str: any, searchString: any, options: any) {
+  handlebars.registerHelper('startsWith', function(this: any, str: any, searchString: any, options: any) {
     const result = stringHelpers.startsWith(str, searchString);
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  handlebars.registerHelper('endsWith', function(str: any, searchString: any, options: any) {
+  handlebars.registerHelper('endsWith', function(this: any, str: any, searchString: any, options: any) {
     const result = stringHelpers.endsWith(str, searchString);
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  handlebars.registerHelper('includes', function(str: any, searchString: any, options: any) {
+  handlebars.registerHelper('includes', function(this: any, str: any, searchString: any, options: any) {
     const result = stringHelpers.includes(str, searchString);
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   });
   
-  // String extraction
   handlebars.registerHelper('substring', (str: any, start: any, end?: any) => 
     stringHelpers.substring(str, start, end));
   handlebars.registerHelper('words', (str: any, count?: any) => stringHelpers.words(str, count));
   handlebars.registerHelper('wordCount', (str: any) => stringHelpers.wordCount(str));
   
-  // Utility
   handlebars.registerHelper('slugify', (str: any) => stringHelpers.slugify(str));
   handlebars.registerHelper('stripTags', (str: any) => stringHelpers.stripTags(str));
   
-  // VN-specific helpers
   handlebars.registerHelper('typewriter', (str: any, speed?: any) => stringHelpers.typewriter(str, speed));
   handlebars.registerHelper('nameTag', (name: any) => stringHelpers.nameTag(name));
   handlebars.registerHelper('dialogueFormat', (speaker: any, text: any) => 
@@ -280,7 +255,6 @@ export function registerStringHelpers(handlebars: any) {
   handlebars.registerHelper('sanitizeInput', (str: any) => stringHelpers.sanitizeInput(str));
   handlebars.registerHelper('colorText', (str: any, color: any) => stringHelpers.colorText(str, color));
   
-  // Character operations
   handlebars.registerHelper('charAt', (str: any, index: any) => {
     return safeString(str).charAt(Math.floor(index));
   });

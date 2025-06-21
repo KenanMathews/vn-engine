@@ -155,11 +155,14 @@ export const comparisonHelpers: ComparisonHelpers = {
   }
 };
 
-function createBlockHelper(helperFn: (...args: any[]) => boolean) {
-  return function(...args: any[]) {
+function createBlockHelper<TContext = any>(
+  helperFn: (...args: any[]) => boolean
+) {
+  return function(this: TContext, ...args: any[]) {
     const options = args[args.length - 1];
     const result = helperFn(...args.slice(0, -1));
     
+    // Now `this` is properly typed as TContext
     return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
   };
 }

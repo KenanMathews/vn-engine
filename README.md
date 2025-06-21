@@ -6,14 +6,15 @@ A powerful, flexible TypeScript library for creating visual novels and interacti
 
 - 📝 **YAML-based scripting** - Clean, readable narrative format
 - 🎮 **Universal game state** - Variables system supports any data structure  
-- 🌟 **Advanced template engine** - Handlebars with comprehensive helper library
+- 🌟 **Dual template engine** - Full Handlebars support with robust fallback
 - 🔀 **Choice tracking** - Advanced branching narrative support
 - 🎯 **Event-driven** - React to game state changes
 - 🏗️ **Framework-agnostic** - Works with any UI framework or vanilla JS
 - 📱 **TypeScript first** - Full type safety and excellent DX
-- 🪶 **Lightweight** - Minimal dependencies
-- 🔧 **Robust fallbacks** - Graceful degradation if helper libraries fail
+- 🪶 **Lightweight** - Zero required dependencies for basic functionality
+- 🔧 **Robust fallbacks** - Graceful degradation when optional libraries unavailable
 - 🚀 **Script Upgrades & DLC** - Hot-swappable content with validation and rollback
+- ⚡ **Async-ready** - Modern async/await patterns with backward compatibility
 
 ## 🚀 Quick Start
 
@@ -23,16 +24,31 @@ A powerful, flexible TypeScript library for creating visual novels and interacti
 npm install vn-engine
 ```
 
-### Basic Usage
+### Optional Dependencies
+
+For enhanced template functionality, you can install Handlebars:
+
+```bash
+npm install handlebars
+npm install @types/handlebars  # For TypeScript projects
+```
+
+**Note:** VN Engine works perfectly without Handlebars! It includes a built-in simple template engine that covers most use cases. Handlebars is only needed for advanced template features like loops and custom helpers.
+
+### Basic Usage (Recommended - Async)
 
 ```typescript
 import { createVNEngine } from 'vn-engine'
 
-// Create engine instance
-const vnEngine = createVNEngine()
+async function initializeGame() {
+  // Create engine instance
+  const vnEngine = createVNEngine()
+  
+  // Initialize async (detects and sets up Handlebars if available)
+  await vnEngine.initialize()
 
-// Load a script
-const script = `
+  // Load a script
+  const script = `
 welcome:
   - "Hello, welcome to my visual novel!"
   - speaker: "Guide"
@@ -45,17 +61,51 @@ welcome:
     say: "Nice to meet you!"
 `
 
-// Set up event listeners
-vnEngine.on('stateChange', (result) => {
-  console.log('New result:', result)
-})
+  // Set up event listeners
+  vnEngine.on('stateChange', (result) => {
+    console.log('New result:', result)
+  })
 
-// Load and start
+  // Load and start
+  vnEngine.loadScript(script)
+  vnEngine.startScene('welcome')
+
+  // Continue through dialogue
+  vnEngine.continue()
+}
+
+initializeGame()
+```
+
+### Synchronous Usage (Legacy Support)
+
+```typescript
+import { createVNEngine } from 'vn-engine'
+
+// Create engine instance (uses simple template engine by default)
+const vnEngine = createVNEngine()
+
+// Use immediately - no initialization required for basic functionality
 vnEngine.loadScript(script)
 vnEngine.startScene('welcome')
+```
 
-// Continue through dialogue
-vnEngine.continue()
+### Template Engine Information
+
+Check which template engine is active:
+
+```typescript
+const engineInfo = vnEngine.getTemplateEngineInfo()
+console.log(`Using ${engineInfo.type} template engine`)
+console.log('Available features:', engineInfo.supportedFeatures)
+
+if (engineInfo.type === 'handlebars') {
+  console.log('✅ Full template functionality available')
+  console.log('📊 Advanced helpers loaded:', engineInfo.helpersRegistered)
+} else {
+  console.log('ℹ️ Using simple template engine - basic functionality available')
+  console.log('💡 Install handlebars for advanced features')
+}
 ```
 
 ## 📚 API Reference
@@ -67,6 +117,19 @@ vnEngine.continue()
 createVNEngine(): VNEngine
 ```
 Creates a new VN engine instance. Multiple instances are supported.
+
+#### Initialization (Recommended)
+
+```typescript
+// Async initialization - detects and configures Handlebars
+await vnEngine.initialize(): Promise<void>
+
+// Check if engine is ready for advanced templates
+vnEngine.isTemplateEngineReady(): boolean
+
+// Get template engine information
+vnEngine.getTemplateEngineInfo(): TemplateEngineInfo
+```
 
 #### Core Methods
 
@@ -86,7 +149,6 @@ setGameState(state: SerializableGameState): void
 getCurrentResult(): ScriptResult | null
 getIsLoaded(): boolean
 getError(): string | null
-
 ```
 
 #### Event System
@@ -107,6 +169,23 @@ vnEngine.on('loaded', () => {
 
 // Clean up
 unsubscribe()
+```
+
+### Template Engine Types
+
+```typescript
+interface TemplateEngineInfo {
+  type: 'handlebars' | 'simple'
+  isHandlebarsAvailable: boolean
+  helpersRegistered: boolean
+  supportedFeatures: {
+    variables: boolean
+    conditionals: boolean
+    helpers: boolean
+    loops: boolean
+    partials: boolean
+  }
+}
 ```
 
 ### Script Result Types
@@ -748,34 +827,74 @@ actions_demo:
         minutes: 15
 ```
 
-## 🎨 Advanced Template System
+## 🎨 Template System
 
-The engine uses Handlebars with a comprehensive helper library for dynamic content. All dialogue, speaker names, and choice text support templating with robust fallback mechanisms.
+VN Engine features a dual template system that adapts to your needs:
 
-### Template System Features
+### Handlebars Mode (Full Features)
+When Handlebars is installed and detected, you get access to all advanced template features:
 
 ```yaml
-# Variable access
-greetings:
+# Full Handlebars functionality
+advanced_templates:
   - "Hello {{player_name}}!"
-  - "You are level {{player.level}}."
+  - "You have {{add coins bonus}} total coins."
+  - "Inventory: {{#each inventory}}{{name}} {{/each}}"
+  - "{{#if (gt player.level 10)}}You're experienced!{{/if}}"
+  - "Random choice: {{sample choices}}"
+  - "{{#hasFlag 'met_merchant'}}The merchant recognizes you.{{/hasFlag}}"
+```
 
-# Comparison helpers
-conditions:
-  - if: "eq player.class 'warrior'"
-    then: ["You swing your sword!"]
-  - if: "gt player.level 10"  
-    then: ["You're experienced!"]
+### Simple Mode (Built-in Fallback)
+When Handlebars isn't available, the engine uses a lightweight template system:
 
-# Math helpers  
+```yaml
+# Simple template features (always available)
+simple_templates:
+  - "Hello {{player_name}}!"
+  - "{{#if player.healthy}}You feel great!{{else}}You need rest.{{/if}}"
+  - "Health: {{player.health}}"
+  - "Condition check: {{#if (gt player.level 5)}}High level{{/if}}"
+```
+
+### Template Engine Detection
+
+```typescript
+async function setupTemplates() {
+  await vnEngine.initialize()
+  
+  const info = vnEngine.getTemplateEngineInfo()
+  
+  if (info.type === 'handlebars') {
+    console.log('✅ Full template functionality available')
+    console.log('Available helpers:', info.helpersRegistered ? 'Yes' : 'Basic only')
+  } else {
+    console.log('ℹ️ Using simple template engine')
+    console.log('Supported features:', info.supportedFeatures)
+  }
+}
+```
+
+### Advanced Template Features (Handlebars Required)
+
+```yaml
+# Math helpers
 calculations:
   - "Total: {{add player.coins bonus}}"
   - "Damage: {{multiply weapon.power player.strength}}"
+  - "Random damage: {{randomInt 10 20}}"
 
-# Array helpers
-inventory:
-  - "You have {{length inventory}} items."
-  - "{{#each inventory}}{{name}}{{/each}}"
+# Array helpers  
+inventory_display:
+  - "Items: {{join inventory.names ', '}}"
+  - "First item: {{first inventory}}"
+  - "{{#each (take inventory 3)}}{{name}} {{/each}}"
+
+# String helpers
+text_formatting:
+  - "{{uppercase player.name}} the {{titleCase player.class}}"
+  - "{{truncate long_description 50}}"
+  - "{{typewriter 'Mysterious text appears...' 30}}"
 
 # VN-specific helpers
 story_logic:
@@ -784,18 +903,33 @@ story_logic:
   - "Welcome back, {{getVar 'player.name' 'Stranger'}}!"
   - "Time: {{formatTime gameTime}}"
 
-# Error-safe templates
-error_safe:
-  - "Health: {{getVar 'nonexistent.health' 'Unknown'}}"  # Won't crash
-  - "{{#hasFlag 'undefined_flag'}}Won't show{{/hasFlag}}"  # Safe fallback
+# Comparison helpers
+conditionals:
+  - "{{#gt player.level 10}}You're experienced!{{/gt}}"
+  - "{{#between player.health 25 75}}Your health is moderate.{{/between}}"
+  - "{{#isEmpty inventory}}Your inventory is empty.{{/isEmpty}}"
 ```
 
 ### Template Context
-All game state is available:
+All game state is available in templates:
 - **Variables**: `{{variable_name}}`, `{{object.property}}`
 - **Flags**: `{{hasFlag 'flag_name'}}`
 - **Choices**: `{{playerChose 'choice_text'}}`
 - **Helpers**: Math, comparison, array, and VN-specific functions
+
+### Validating Templates
+
+```typescript
+// Check if a template is valid for current engine
+const validation = vnEngine.validateTemplate('{{gt player.level 5}}')
+
+if (validation.valid) {
+  console.log(`Template valid for ${validation.engine} engine`)
+} else {
+  console.warn(`Template error: ${validation.error}`)
+  console.log('Available features:', validation.supportedFeatures)
+}
+```
 
 ## 🎮 Game State Management
 
@@ -972,12 +1106,36 @@ later_scene:
 
 ## 🔧 Development & Testing
 
+### Initialization Patterns
+
+```typescript
+// Modern async pattern (recommended)
+async function initGame() {
+  const vnEngine = createVNEngine()
+  await vnEngine.initialize()  // Detects Handlebars, sets up helpers
+  // Engine ready with all features
+}
+
+// Legacy sync pattern (still supported)
+function initGameSync() {
+  const vnEngine = createVNEngine()
+  // Engine ready with basic features immediately
+  // Handlebars detection happens lazily
+}
+
+// Check engine status
+function checkEngineStatus(vnEngine) {
+  console.log('Template engine ready:', vnEngine.isTemplateEngineReady())
+  console.log('Engine info:', vnEngine.getTemplateEngineInfo())
+}
+```
+
 ### Error Handling
 ```yaml
 debug_scene:
-  - "{{debug player 'Player State'}}"              # Console logging
-  - "Name: {{getVar 'player.name' 'UNKNOWN'}}"     # Safe fallbacks
-  - "{{hasFlag 'nonexistent_flag'}}"               # Returns false safely
+  - "{{debug player 'Player State'}}"              # Console logging (Handlebars only)
+  - "Name: {{getVar 'player.name' 'UNKNOWN'}}"     # Safe fallbacks (both engines)
+  - "{{hasFlag 'nonexistent_flag'}}"               # Returns false safely (both engines)
 ```
 
 ### Building & Testing Scripts
@@ -995,9 +1153,15 @@ npm run demo            # Run demo application
 
 ## 📦 Dependencies
 
-- **handlebars** - Core template engine
+### Required (Core Functionality)
 - **js-yaml** - YAML parsing
-- **lodash** - Utility functions
+- **lodash** - Utility functions (used internally for robust operations)
+
+### Optional (Enhanced Features)
+- **handlebars** - Advanced template engine with helpers and loops
+
+### Zero Dependencies Mode
+VN Engine can work with zero external dependencies by using a simplified YAML parser and template engine (future feature).
 
 ## 🚀 Advanced Features
 
@@ -1008,16 +1172,22 @@ npm run demo            # Run demo application
 const mainStory = createVNEngine()
 const sideQuest = createVNEngine()
 
+await Promise.all([
+  mainStory.initialize(),
+  sideQuest.initialize()
+])
+
 mainStory.loadScript(mainScript)
 sideQuest.loadScript(questScript)
 
-// Each maintains separate state
+// Each maintains separate state and template engines
 ```
 
 ### Event-Driven UI Updates
 
 ```typescript
 const vnEngine = createVNEngine()
+await vnEngine.initialize()
 
 vnEngine.on('stateChange', (result) => {
   switch (result?.type) {
@@ -1048,10 +1218,46 @@ vnEngine.on('loaded', () => {
 ### Custom Template Helper Registration
 
 ```typescript
-import { TemplateManager } from 'vn-engine'
+// Only works when Handlebars is available
+await vnEngine.initialize()
 
-// Access the internal Handlebars instance if needed
-// (Advanced usage - most needs covered by built-in helpers)
+const templateEngine = vnEngine.getTemplateEngineInfo()
+if (templateEngine.type === 'handlebars') {
+  const handlebars = vnEngine.getHandlebarsInstance()
+  
+  // Register custom helper
+  handlebars.registerHelper('customHelper', (value) => {
+    return `Custom: ${value}`
+  })
+  
+  console.log('Custom helper registered!')
+} else {
+  console.log('Custom helpers require Handlebars')
+}
+```
+
+### Template Engine Feature Detection
+
+```typescript
+const vnEngine = createVNEngine()
+await vnEngine.initialize()
+
+// Check what features are available
+const features = vnEngine.getTemplateEngineInfo().supportedFeatures
+
+if (features.helpers) {
+  console.log('Advanced helpers available')
+  // Use complex template features
+} else {
+  console.log('Using simple templates')
+  // Stick to basic variable interpolation
+}
+
+if (features.loops) {
+  // Can use {{#each}} loops
+} else {
+  // Use simple conditionals only
+}
 ```
 
 ## 🎯 Use Cases
@@ -1067,6 +1273,26 @@ import { TemplateManager } from 'vn-engine'
 - **DLC & Content Updates** - Seamless content expansion
 - **Modding Support** - Community-generated content with validation
 - **Episodic Releases** - Sequential content delivery
+- **Progressive Web Apps** - Lightweight narrative experiences
+- **Content Management** - Template-driven content systems
+
+### Template Compatibility
+
+#### Always Compatible (Both Engines)
+```yaml
+- "Hello {{player_name}}!"
+- "Health: {{player.health}}"
+- if: "gt player.level 5"
+  then: ["You're experienced!"]
+```
+
+#### Handlebars Only
+```yaml
+- "{{#each inventory}}{{name}} {{/each}}"
+- "{{add coins bonus}}"
+- "{{randomInt 1 6}}"
+- "{{#hasFlag 'special'}}Secret content{{/hasFlag}}"
+```
 
 ## 📄 License
 
@@ -1076,6 +1302,25 @@ MIT License - see LICENSE file for details.
 
 Contributions welcome! Please read CONTRIBUTING.md for guidelines.
 
+### Development Setup
+
+```bash
+git clone <repository>
+cd vn-engine
+npm install
+
+# For testing with Handlebars
+npm install handlebars @types/handlebars
+
+# Run tests
+npm test
+
+# Build library
+npm run build
+```
+
 ---
 
 Built with ❤️ for interactive storytelling
+
+**Note:** VN Engine is designed to work perfectly out of the box with zero configuration. Install Handlebars for advanced features, or use the built-in simple template engine for lightweight projects!

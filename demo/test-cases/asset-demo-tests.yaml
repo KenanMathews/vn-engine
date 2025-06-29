@@ -1,0 +1,566 @@
+# test-cases/asset-demo-tests.yaml
+# Asset Management System Tests for VN Engine
+
+category: "Asset Management"
+description: "Tests asset helpers, multimedia support, and asset showcase demo"
+priority: 3
+
+tests:
+  - name: "Asset Helper Functions"
+    description: "Tests all asset-related helper functions"
+    script: |
+      asset_helper_test:
+        - actions:
+            - type: setVar
+              key: testAssets
+              value:
+                - id: "test_portrait"
+                  name: "character.jpg"
+                  url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400"
+                  size: 52000
+                  category: "portrait"
+                - id: "test_background"
+                  name: "scene.jpg"
+                  url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600"
+                  size: 180000
+                  category: "background"
+                - id: "test_audio"
+                  name: "sound.mp3"
+                  url: "https://example.com/sound.mp3"
+                  size: 85000
+                  category: "audio"
+        - "Total assets: {{assetCount testAssets}}"
+        - "Portrait exists: {{#hasAsset 'test_portrait' testAssets}}YES{{else}}NO{{/hasAsset}}"
+        - "Missing asset: {{#hasAsset 'missing_asset' testAssets}}YES{{else}}NO{{/hasAsset}}"
+        - "Portrait type: {{getMediaType 'character.jpg'}}"
+        - "Audio type: {{getMediaType 'sound.mp3'}}"
+        - "Unknown type: {{getMediaType 'document.txt'}}"
+        - "Size formatting: {{formatFileSize 52000}}"
+        - "Large size: {{formatFileSize 1048576}}"
+        - "URL valid: {{#if (resolveAsset 'test_portrait' testAssets)}}YES{{else}}NO{{/if}}"
+        - "Missing URL: {{#if (resolveAsset 'nonexistent' testAssets)}}YES{{else}}NO{{/if}}"
+        - "Validation: {{#validateAsset 'test_portrait' testAssets}}VALID{{else}}INVALID{{/validateAsset}}"
+        - "Key normalization: {{normalizeKey 'Test Image.PNG'}}"
+    scene: "asset_helper_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Total assets: 3"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Portrait exists: YES"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing asset: NO"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Portrait type: image"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Audio type: audio"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Unknown type: unknown"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Size formatting: 50.8 KB"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Large size: 1.0 MB"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "URL valid: YES"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing URL: NO"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Validation: VALID"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Key normalization: test_image"
+
+  - name: "Asset Display Functions"
+    description: "Tests image and audio display helpers"
+    script: |
+      display_test:
+        - actions:
+            - type: setVar
+              key: displayAssets
+              value:
+                - id: "hero_img"
+                  name: "hero.jpg"
+                  url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400"
+                  size: 45000
+                - id: "bgm_audio"
+                  name: "music.mp3"
+                  url: "https://example.com/background.mp3"
+                  size: 120000
+        - "Displaying hero image:"
+        - "{{showImage 'hero_img' displayAssets 'Hero Character' 'character-portrait'}}"
+        - "Playing background music:"
+        - "{{playAudio 'bgm_audio' displayAssets true true}}"
+        - "Audio with no loop:"
+        - "{{playAudio 'bgm_audio' displayAssets true false}}"
+        - "Missing image test:"
+        - "{{showImage 'missing_img' displayAssets 'Missing' 'test-class'}}"
+    scene: "display_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Displaying hero image:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: '<img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400" alt="Hero Character" class="character-portrait">'
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Playing background music:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: '<audio src="https://example.com/background.mp3" controls autoplay loop></audio>'
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Audio with no loop:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: '<audio src="https://example.com/background.mp3" controls autoplay></audio>'
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing image test:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: ""  # Should return empty string for missing asset
+
+  - name: "Asset Information Retrieval"
+    description: "Tests asset information and metadata functions"
+    script: |
+      info_test:
+        - actions:
+            - type: setVar
+              key: infoAssets
+              value:
+                - id: "detailed_asset"
+                  name: "complex.png"
+                  url: "https://example.com/complex.png"
+                  size: 256000
+                  category: "ui"
+                  metadata: { version: "1.2", author: "Artist" }
+        - "Asset info retrieval:"
+        - "{{#with (getAssetInfo 'detailed_asset' infoAssets)}}Type: {{type}}, Size: {{../formatFileSize size}}, Name: {{name}}{{/with}}"
+        - "Direct asset access:"
+        - "{{#with (getAsset 'detailed_asset' infoAssets)}}ID: {{id}}, Category: {{category}}{{/with}}"
+        - "Missing asset info:"
+        - "{{getAssetInfo 'nonexistent' infoAssets}}"
+    scene: "info_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Asset info retrieval:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Type: image, Size: 250.0 KB, Name: complex.png"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Direct asset access:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "ID: detailed_asset, Category: ui"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing asset info:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: ""  # Should return null/empty for missing asset
+
+  - name: "Asset Showcase Demo Flow"
+    description: "Tests the complete asset showcase demo navigation"
+    script: |
+      setup:
+        - actions:
+            - type: setVar
+              key: demoAssets
+              value:
+                - id: "hero_portrait"
+                  name: "hero.jpg"
+                  url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop&crop=face"
+                  size: 52000
+                  category: "portrait"
+                - id: "warrior_portrait"  
+                  name: "warrior.jpg"
+                  url: "https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=300&h=400&fit=crop&crop=face"
+                  size: 48000
+                  category: "portrait"
+                - id: "forest_bg"
+                  name: "forest.jpg"
+                  url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop"
+                  size: 180000
+                  category: "background"
+                - id: "ambient_forest"
+                  name: "forest_ambience.mp3"
+                  url: "https://opengameart.org/sites/default/files/forest_ambience_0.mp3"
+                  size: 1200000
+                  category: "audio"
+
+      intro:
+        - "🎨 **VN Engine Asset Management Demo**"
+        - "Welcome to the comprehensive asset system demonstration!"
+        - "📊 **Asset Library Overview:**"
+        - "• Total Assets: {{assetCount demoAssets}}"
+        - "• Portraits: 2 characters"
+        - "• Backgrounds: 1 scenic location" 
+        - "• Audio: 1 immersive sound"
+        - "• Combined Size: {{formatFileSize 1480000}}"
+        - text: "Choose your adventure path:"
+          choices:
+            - text: "🧙‍♂️ Meet the Characters"
+              goto: character_showcase
+            - text: "🏰 Explore Locations"
+              goto: location_showcase
+            - text: "🔧 Technical Demo"
+              goto: technical_demo
+
+      character_showcase:
+        - "👥 **Character Portrait Gallery**"
+        - "Meet the heroes of our story with real portrait photography!"
+        - "**Hero Introduction:**"
+        - "{{showImage 'hero_portrait' demoAssets 'The Hero' 'character-portrait'}}"
+        - speaker: "Hero"
+          say: "Greetings! I'm your protagonist, ready for adventure!"
+        - "Portrait Details:"
+        - "• Type: {{getMediaType 'hero.jpg'}}"
+        - "• Size: {{formatFileSize 52000}}"
+        - "• Valid: {{#validateAsset 'hero_portrait' demoAssets}}✅ Confirmed{{else}}❌ Error{{/validateAsset}}"
+        - text: "Meet another character?"
+          choices:
+            - text: "⚔️ The Warrior"
+              goto: warrior_intro
+            - text: "🏠 Return to Menu"
+              goto: intro
+
+      warrior_intro:
+        - "⚔️ **The Warrior Appears**"
+        - "{{showImage 'warrior_portrait' demoAssets 'The Warrior' 'character-portrait'}}"
+        - speaker: "Warrior"
+          say: "Well met! My blade is sharp and my resolve unwavering!"
+        - "Asset Information:"
+        - "• File: warrior.jpg"
+        - "• Type: {{getMediaType 'warrior.jpg'}}"
+        - "• Size: {{formatFileSize 48000}}"
+        - "• Status: {{#hasAsset 'warrior_portrait' demoAssets}}✅ Loaded{{else}}❌ Missing{{/hasAsset}}"
+        - goto: character_showcase
+
+      location_showcase:
+        - "🗺️ **World Exploration**"
+        - "Discover beautiful locations with stunning photography!"
+        - "🌲 **Deep in the Enchanted Forest**"
+        - "{{showImage 'forest_bg' demoAssets 'Mystical Forest Path' 'scene-background'}}"
+        - "The ancient trees whisper secrets as dappled sunlight filters through the canopy..."
+        - "Location Details:"
+        - "• Scene: Mystical woodland path"
+        - "• Type: {{getMediaType 'forest.jpg'}}"
+        - "• Size: {{formatFileSize 180000}}"
+        - "🎵 **Forest Ambience**"
+        - "{{playAudio 'ambient_forest' demoAssets true true}}"
+        - "The forest comes alive with natural sounds..."
+        - "• Audio Type: {{getMediaType 'forest_ambience.mp3'}}"
+        - "• Size: {{formatFileSize 1200000}}"
+        - goto: intro
+
+      technical_demo:
+        - "🔧 **Technical Asset Management Demo**"
+        - "Explore the powerful asset helper functions in action!"
+        - "=== Asset Detection Tests ==="
+        - "Hero Portrait: {{#hasAsset 'hero_portrait' demoAssets}}✅ Found{{else}}❌ Missing{{/hasAsset}}"
+        - "Warrior Portrait: {{#hasAsset 'warrior_portrait' demoAssets}}✅ Found{{else}}❌ Missing{{/hasAsset}}"
+        - "Forest Background: {{#hasAsset 'forest_bg' demoAssets}}✅ Found{{else}}❌ Missing{{/hasAsset}}"
+        - "Forest Audio: {{#hasAsset 'ambient_forest' demoAssets}}✅ Found{{else}}❌ Missing{{/hasAsset}}"
+        - "=== Missing Asset Tests (Should Fail) ==="
+        - "Nonexistent Asset: {{#hasAsset 'missing_asset' demoAssets}}❌ Found{{else}}✅ Not Found{{/hasAsset}}"
+        - "Empty Key: {{#hasAsset '' demoAssets}}❌ Found{{else}}✅ Not Found{{/hasAsset}}"
+        - "=== Helper Function Tests ==="
+        - "Key Normalization:"
+        - "• 'Hero Portrait.JPG' → {{normalizeKey 'Hero Portrait.JPG'}}"
+        - "• 'Forest Background.png' → {{normalizeKey 'Forest Background.png'}}"
+        - goto: intro
+    scene: "intro"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          contains: "Total Assets: 4"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Portraits: 2 characters"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Combined Size: 1.4 MB"
+      - action: "continue"
+        expected:
+          type: "show_choices"
+          choices_count: 3
+      - action: "choice"
+        choice_index: 0  # Choose character showcase
+        expected:
+          type: "display_dialogue"
+          content: "👥 **Character Portrait Gallery**"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: '<img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          speaker: "Hero"
+          content: "Greetings! I'm your protagonist, ready for adventure!"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Type: image"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Size: 50.8 KB"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          contains: "Valid: ✅ Confirmed"
+      - action: "continue"
+        expected:
+          type: "show_choices"
+          choices_count: 2
+      - action: "choice"
+        choice_index: 0  # Choose warrior
+        expected:
+          type: "display_dialogue"
+          content: "⚔️ **The Warrior Appears**"
+
+  - name: "Error Handling and Edge Cases"
+    description: "Tests graceful handling of missing assets and invalid data"
+    script: |
+      error_handling_test:
+        - actions:
+            - type: setVar
+              key: limitedAssets
+              value:
+                - id: "valid_asset"
+                  name: "test.jpg"
+                  url: "https://example.com/test.jpg"
+                  size: 1024
+        - "Testing missing assets:"
+        - "Missing asset count: {{assetCount missingArray}}"
+        - "Null asset validation: {{#validateAsset 'test' null}}VALID{{else}}INVALID{{/validateAsset}}"
+        - "Empty asset array: {{assetCount emptyArray}}"
+        - "Invalid media type: {{getMediaType ''}}"
+        - "Invalid size format: {{formatFileSize invalidSize}}"
+        - "Missing asset display: {{showImage 'nonexistent' limitedAssets 'Missing' 'test'}}"
+        - "Missing audio: {{playAudio 'nonexistent' limitedAssets}}"
+        - "Undefined variable in asset: {{showImage undefinedVar limitedAssets}}"
+        - "Graceful degradation test complete"
+    scene: "error_handling_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Testing missing assets:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing asset count: 0"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Null asset validation: INVALID"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Empty asset array: 0"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Invalid media type: unknown"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Invalid size format: 0 B"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing asset display: "
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Missing audio: "
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Undefined variable in asset: "
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Graceful degradation test complete"
+
+  - name: "Asset Performance and Scaling"
+    description: "Tests asset system performance with larger datasets"
+    script: |
+      performance_test:
+        - actions:
+            - type: setVar
+              key: largeAssetSet
+              value:
+                - id: "asset_001"
+                  name: "image_001.jpg"
+                  url: "https://example.com/001.jpg"
+                  size: 10240
+                - id: "asset_002"
+                  name: "image_002.jpg"
+                  url: "https://example.com/002.jpg"
+                  size: 20480
+                - id: "asset_003"
+                  name: "audio_001.mp3"
+                  url: "https://example.com/001.mp3"
+                  size: 512000
+                - id: "asset_004"
+                  name: "video_001.mp4"
+                  url: "https://example.com/001.mp4"
+                  size: 2048000
+                - id: "asset_005"
+                  name: "document.pdf"
+                  url: "https://example.com/doc.pdf"
+                  size: 102400
+        - "Large asset set testing:"
+        - "Total assets: {{assetCount largeAssetSet}}"
+        - "Combined size: {{formatFileSize 2693120}}"
+        - "First asset: {{#hasAsset 'asset_001' largeAssetSet}}FOUND{{else}}NOT FOUND{{/hasAsset}}"
+        - "Last asset: {{#hasAsset 'asset_005' largeAssetSet}}FOUND{{else}}NOT FOUND{{/hasAsset}}"
+        - "Middle lookup: {{#hasAsset 'asset_003' largeAssetSet}}FOUND{{else}}NOT FOUND{{/hasAsset}}"
+        - "Non-existent lookup: {{#hasAsset 'asset_999' largeAssetSet}}FOUND{{else}}NOT FOUND{{/hasAsset}}"
+        - "Multiple type validation:"
+        - "• Image: {{getMediaType 'image_001.jpg'}}"
+        - "• Audio: {{getMediaType 'audio_001.mp3'}}" 
+        - "• Video: {{getMediaType 'video_001.mp4'}}"
+        - "• Document: {{getMediaType 'document.pdf'}}"
+        - "Performance test complete"
+    scene: "performance_test"
+    steps:
+      - action: "validate"
+        expected:
+          type: "display_dialogue"
+          content: "Large asset set testing:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Total assets: 5"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Combined size: 2.6 MB"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "First asset: FOUND"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Last asset: FOUND"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Middle lookup: FOUND"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Non-existent lookup: NOT FOUND"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Multiple type validation:"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "• Image: image"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "• Audio: audio"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "• Video: video"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "• Document: unknown"
+      - action: "continue"
+        expected:
+          type: "display_dialogue"
+          content: "Performance test complete"
+
+# Template-only tests for quick helper validation
+template_tests:
+  - template: "{{assetCount (array 'a' 'b' 'c')}}"
+    expected: "3"
+    description: "Asset count helper with array"
+  
+  - template: "{{formatFileSize 1024}}"
+    expected: "1.0 KB"
+    description: "File size formatting - KB"
+  
+  - template: "{{formatFileSize 1048576}}"
+    expected: "1.0 MB"
+    description: "File size formatting - MB"
+  
+  - template: "{{formatFileSize 0}}"
+    expected: "0 B"
+    description: "File size formatting - zero"
+  
+  - template: "{{getMediaType 'image.jpg'}}"
+    expected: "image"
+    description: "Media type detection - image"
+  
+  - template: "{{getMediaType 'song.mp3'}}"
+    expected: "audio"
+    description: "Media type detection - audio"
+  
+  - template: "{{getMediaType 'movie.mp4'}}"
+    expected: "video"
+    description: "Media type detection - video"
+  
+  - template: "{{getMediaType 'document.txt'}}"
+    expected: "unknown"
+    description: "Media type detection - unknown"
+  
+  - template: "{{normalizeKey 'Test Image.PNG'}}"
+    expected: "test_image"
+    description: "Key normalization - spaces and extension"
+  
+  - template: "{{normalizeKey 'Complex-Name_File.jpeg'}}"
+    expected: "complex_name_file"
+    description: "Key normalization - complex characters"

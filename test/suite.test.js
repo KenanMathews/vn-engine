@@ -1,4 +1,3 @@
-
 import { performance } from "perf_hooks";
 import { createTestReporter } from "./utils/errorReporter.js";
 import { getPackager, cleanupTestPackage } from "./utils/packager.js";
@@ -8,6 +7,7 @@ const testResults = {
   core: null,
   performance: null,
   edgeCases: null,
+  assets: null,
   imports: null,
   packageValidation: null,
   startTime: null,
@@ -119,6 +119,24 @@ async function runTestSuite() {
     console.log("4️⃣ Running Import/Export Tests (npm Compatibility)...");
     console.log("─".repeat(65));
 
+    console.log("4️⃣ Running Asset Helper Tests (Package-based)...");
+    console.log("─".repeat(55));
+
+    const assetResults = await runAssetTestsEnhanced();
+    testResults.assets = assetResults;
+
+    if (assetResults.errors) {
+      testResults.allErrors.push({
+        category: "asset-helpers",
+        ...assetResults.errors,
+      });
+    }
+
+    console.log("\n✅ Asset helper tests completed\n");
+
+    console.log("5️⃣ Running Import/Export Tests (npm Compatibility)...");
+    console.log("─".repeat(65));
+
     const importResults = await runImportTestsEnhanced();
     testResults.imports = importResults;
 
@@ -193,6 +211,7 @@ function calculateFinalResults() {
     core: false,
     performance: false,
     edgeCases: false,
+    assets: false,
     imports: false,
     integrity: false,
   };
@@ -243,6 +262,15 @@ function calculateFinalResults() {
     }
   }
 
+  if (testResults.assets) {
+    breakdown.assets = testResults.assets.status === "passed";
+    totalPassed += testResults.assets.passed || 0;
+    totalFailed += testResults.assets.failed || 0;
+    if (testResults.assets.status !== "passed") {
+      overallSuccess = false;
+    }
+  }
+
   if (testResults.packageIntegrity) {
     breakdown.integrity = testResults.packageIntegrity.successRate >= 80;
     const integrityPassed = Math.round(
@@ -289,6 +317,7 @@ function calculateFinalResults() {
       core: testResults.core,
       performance: testResults.performance,
       edgeCases: testResults.edgeCases,
+      assets: testResults.assets,
       imports: testResults.imports,
       packageIntegrity: testResults.packageIntegrity,
     },
@@ -488,6 +517,35 @@ async function runEdgeCaseTestsEnhanced() {
     };
   } catch (error) {
     console.error(`   ❌ Edge case test execution failed: ${error.message}`);
+
+    return {
+      status: "failed",
+      passed: 0,
+      failed: 1,
+      errors: [{ message: error.message, stack: error.stack }],
+    };
+  }
+}
+
+async function runAssetTestsEnhanced() {
+  try {
+    console.log("🎨 Running Asset Helper Tests...");
+
+    const { runAssetTests } = await import("./asset.test.js");
+    const assetResults = await runAssetTests();
+
+    console.log(
+      `   📊 Asset results: ${assetResults.passed} passed, ${assetResults.failed} failed`
+    );
+
+    return {
+      status: assetResults.failed === 0 ? "passed" : "partial",
+      passed: assetResults.passed,
+      failed: assetResults.failed,
+      errors: assetResults.errors,
+    };
+  } catch (error) {
+    console.error(`   ❌ Asset test execution failed: ${error.message}`);
 
     return {
       status: "failed",
@@ -791,6 +849,12 @@ function displayComprehensivePackageAnalysis() {
       }`
     : "not run";
 
+  const assetStats = testResults.assets
+    ? `${testResults.assets.passed}/${
+        testResults.assets.passed + testResults.assets.failed
+      }`
+    : "not run";
+
   const importStats = testResults.imports
     ? `${testResults.imports.passed}/${
         testResults.imports.passed + testResults.imports.failed
@@ -819,13 +883,18 @@ function displayComprehensivePackageAnalysis() {
       testResults.edgeCases?.failed === 0 ? "✅" : "❌"
     } Edge Cases: ${edgeStats} passed`
   );
-  
+  console.log(
+    `   ${
+      testResults.assets?.status === "passed" ? "✅" : "❌"
+    } Asset Helpers: ${assetStats} passed`
+  );
+
   console.log(
     `   ${
       testResults.imports?.status === "passed" ? "✅" : "❌"
     } Import/Export Tests: ${importStats} passed`
   );
-  
+
   console.log(
     `   ${
       testResults.packageIntegrity?.successRate >= 80 ? "✅" : "❌"
@@ -1002,7 +1071,9 @@ function generatePackageRecommendations() {
 
   if (testResults.imports && testResults.imports.status !== "passed") {
     console.log("   📦 IMPORT/EXPORT COMPATIBILITY ISSUES:");
-    console.log("      1. Fix missing or incorrect exports in main entry point");
+    console.log(
+      "      1. Fix missing or incorrect exports in main entry point"
+    );
     console.log("      2. Ensure CommonJS and ES module compatibility");
     console.log("      3. Verify TypeScript declaration files are complete");
     console.log("      4. Test import patterns that npm users will expect");
@@ -1074,7 +1145,11 @@ function calculatePackageHealthScore() {
   const importScore = testResults.imports?.status === "passed" ? 100 : 50;
 
   return {
-    overall: testScore * 0.4 + performanceScore * 0.2 + packageScore * 0.2 + importScore * 0.2,
+    overall:
+      testScore * 0.4 +
+      performanceScore * 0.2 +
+      packageScore * 0.2 +
+      importScore * 0.2,
     testing: testScore,
     performance: performanceScore,
     packaging: packageScore,
@@ -1130,11 +1205,25 @@ function displayPackageHealthMetrics(healthScore) {
     }`
   );
   console.log(`      API Compatibility: Package-based testing validated`);
-  
+
   if (testResults.imports) {
-    console.log(`      Named Imports: ${testResults.imports.status === "passed" ? "✅ Working" : "❌ Issues"}`);
-    console.log(`      Tree-shaking: ${testResults.imports.status === "passed" ? "✅ Compatible" : "❌ Issues"}`);
-    console.log(`      TypeScript: ${testResults.imports.status === "passed" ? "✅ Declarations OK" : "❌ Issues"}`);
+    console.log(
+      `      Named Imports: ${
+        testResults.imports.status === "passed" ? "✅ Working" : "❌ Issues"
+      }`
+    );
+    console.log(
+      `      Tree-shaking: ${
+        testResults.imports.status === "passed" ? "✅ Compatible" : "❌ Issues"
+      }`
+    );
+    console.log(
+      `      TypeScript: ${
+        testResults.imports.status === "passed"
+          ? "✅ Declarations OK"
+          : "❌ Issues"
+      }`
+    );
   }
 }
 
@@ -1214,6 +1303,7 @@ function getPackageOverallStatus() {
     : false;
   const perfSuccess = testResults.performance?.status === "completed";
   const importSuccess = testResults.imports?.status === "passed";
+  const assetSuccess = testResults.assets?.status === "passed";
   const integritySuccess = testResults.packageIntegrity
     ? testResults.packageIntegrity.successRate >= 80
     : false;
@@ -1224,6 +1314,7 @@ function getPackageOverallStatus() {
     edgeSuccess &&
     perfSuccess &&
     importSuccess &&
+    assetSuccess &&
     integritySuccess
   ) {
     return "🎉 SUCCESS:";

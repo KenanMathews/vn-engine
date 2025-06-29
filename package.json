@@ -1,6 +1,6 @@
 {
   "name": "vn-engine",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "A powerful, flexible TypeScript library for creating visual novels and interactive narratives",
   "main": "dist/vn-engine.js",

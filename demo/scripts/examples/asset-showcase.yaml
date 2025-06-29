@@ -1,0 +1,230 @@
+setup:
+  - actions:
+      - type: setVar
+        key: gameAssets
+        value:
+          - id: "hero_portrait"
+            name: "hero.png"
+            url: "https://picsum.photos/300/400?random=1"
+            size: 45000
+            category: "portrait"
+          - id: "villain_portrait"  
+            name: "villain.png"
+            url: "https://picsum.photos/300/400?random=2"
+            size: 48000
+            category: "portrait"
+          - id: "castle_bg"
+            name: "castle.jpg"
+            url: "https://picsum.photos/800/600?random=3"
+            size: 220000
+            category: "background"
+          - id: "forest_bg"
+            name: "forest.jpg" 
+            url: "https://picsum.photos/800/600?random=4"
+            size: 180000
+            category: "background"
+          - id: "theme_music"
+            name: "theme.mp3"
+            url: "https://www.soundjay.com/misc/bell-ringing-05.wav"
+            size: 85000
+            category: "audio"
+          - id: "sword_sound"
+            name: "sword.wav"
+            url: "https://www.soundjay.com/misc/bell-ringing-04.wav"
+            size: 32000
+            category: "audio"
+
+intro:
+  - "🎨 **Asset Management Demo**"
+  - "Welcome to the VN Engine asset system with working URLs!"
+  
+  - "📊 **Asset Library Status:**"
+  - "• Total Assets: {{assetCount gameAssets}}"
+  - "• Storage Used: {{formatFileSize 610000}}"
+  
+  - "All assets use real, working URLs that will load properly."
+  
+  - text: "What would you like to explore?"
+    choices:
+      - text: "Character Portraits"
+        goto: character_test
+      - text: "Background Images"
+        goto: background_test
+      - text: "Audio System"
+        goto: audio_test
+      - text: "Asset Information"
+        goto: asset_info_test
+      - text: "Asset Validation"
+        goto: validation_test
+
+character_test:
+  - "👤 **Character Portrait System**"
+  
+  - "Testing hero portrait..."
+  - "Asset exists: {{#hasAsset 'hero_portrait' gameAssets}}✅ Yes{{else}}❌ No{{/hasAsset}}"
+  
+  - "{{showImage 'hero_portrait' gameAssets 'Hero Character' 'character-portrait'}}"
+  - speaker: "Hero"
+    say: "Greetings! My portrait loaded from a real URL using Picsum Photos."
+  
+  - "Testing villain portrait..."
+  - "{{showImage 'villain_portrait' gameAssets 'Villain Character' 'character-portrait'}}"
+  - speaker: "Villain"
+    say: "Excellent! Each character gets a unique image from the service."
+  
+  - "✅ Character portraits loading successfully!"
+  - goto: main_menu
+
+background_test:
+  - "🏰 **Background Image System**"
+  
+  - "Setting castle background..."
+  - "{{showImage 'castle_bg' gameAssets 'Castle Scene' 'scene-background'}}"
+  - "You stand before an imposing structure (random image from Picsum)."
+  
+  - text: "Change to forest scene?"
+    choices:
+      - text: "Yes, go to forest"
+        goto: forest_scene
+      - text: "Stay here"
+        goto: main_menu
+
+forest_scene:
+  - "{{showImage 'forest_bg' gameAssets 'Forest Path' 'scene-background'}}"
+  - "🌲 You venture into a mysterious landscape..."
+  - "The background changed seamlessly with a new random image!"
+  - goto: main_menu
+
+audio_test:
+  - "🎵 **Audio Asset System**"
+  
+  - "Testing audio assets with real sound files..."
+  
+  - text: "Which audio would you like to test?"
+    choices:
+      - text: "Play background music"
+        goto: play_music
+      - text: "Play sound effect"
+        goto: play_sfx
+      - text: "Audio information only"
+        goto: audio_info
+
+play_music:
+  - "{{playAudio 'theme_music' gameAssets true true}}"
+  - "🎵 Background music is now playing!"
+  - "• File: Bell ringing sound (looped)"
+  - "• Auto-play: ✅ Enabled"
+  - "• Loop: ✅ Enabled"
+  - "• Size: {{formatFileSize 85000}}"
+  - goto: main_menu
+
+play_sfx:
+  - "{{playAudio 'sword_sound' gameAssets true false}}"
+  - "⚔️ Sound effect played!"
+  - "• File: Bell ringing (single play)"
+  - "• Auto-play: ✅ Enabled"
+  - "• Loop: ❌ Disabled"
+  - "• Size: {{formatFileSize 32000}}"
+  - goto: main_menu
+
+audio_info:
+  - "🎵 **Audio Asset Information**"
+  - "Theme Music:"
+  - "• Type: {{getMediaType 'theme.mp3'}}"
+  - "• Size: {{formatFileSize 85000}}"
+  - "• Valid: {{#validateAsset 'theme_music' gameAssets}}✅{{else}}❌{{/validateAsset}}"
+  - "• URL: {{#if (resolveAsset 'theme_music' gameAssets)}}✅ Available{{else}}❌ Missing{{/if}}"
+  
+  - "Sword Sound:"
+  - "• Type: {{getMediaType 'sword.wav'}}"
+  - "• Size: {{formatFileSize 32000}}"
+  - "• Valid: {{#validateAsset 'sword_sound' gameAssets}}✅{{else}}❌{{/validateAsset}}"
+  - "• URL: {{#if (resolveAsset 'sword_sound' gameAssets)}}✅ Available{{else}}❌ Missing{{/if}}"
+  - goto: main_menu
+
+asset_info_test:
+  - "📋 **Asset Information System**"
+  
+  - "=== Individual Asset Details ==="
+  - "Hero Portrait:"
+  - "• Type: {{getMediaType 'hero.png'}}"
+  - "• Size: {{formatFileSize 45000}}"
+  - "• Valid: {{#validateAsset 'hero_portrait' gameAssets}}✅{{else}}❌{{/validateAsset}}"
+  - "• URL: Real Picsum photo service"
+  
+  - "Castle Background:"
+  - "• Type: {{getMediaType 'castle.jpg'}}"
+  - "• Size: {{formatFileSize 220000}}"
+  - "• Valid: {{#validateAsset 'castle_bg' gameAssets}}✅{{else}}❌{{/validateAsset}}"
+  - "• URL: Real Picsum photo service"
+  
+  - "=== Key Normalization Test ==="
+  - "Original: 'Hero Portrait.PNG'"
+  - "Normalized: {{normalizeKey 'Hero Portrait.PNG'}}"
+  
+  - "=== File Size Tests ==="
+  - "1 KB: {{formatFileSize 1024}}"
+  - "1 MB: {{formatFileSize 1048576}}"
+  - "Custom: {{formatFileSize 1536}} (1.5 KB)"
+  
+  - goto: main_menu
+
+validation_test:
+  - "🔍 **Asset Validation System**"
+  
+  - "=== Checking All Assets ==="
+  - "Hero Portrait: {{#validateAsset 'hero_portrait' gameAssets}}✅ Valid{{else}}❌ Invalid{{/validateAsset}}"
+  - "Villain Portrait: {{#validateAsset 'villain_portrait' gameAssets}}✅ Valid{{else}}❌ Invalid{{/validateAsset}}"
+  - "Castle Background: {{#validateAsset 'castle_bg' gameAssets}}✅ Valid{{else}}❌ Invalid{{/validateAsset}}"
+  - "Forest Background: {{#validateAsset 'forest_bg' gameAssets}}✅ Valid{{else}}❌ Invalid{{/validateAsset}}"
+  - "Theme Music: {{#validateAsset 'theme_music' gameAssets}}✅ Valid{{else}}❌ Invalid{{/validateAsset}}"
+  - "Sword Sound: {{#validateAsset 'sword_sound' gameAssets}}✅ Valid{{else}}❌ Invalid{{/validateAsset}}"
+  
+  - "=== Testing Missing Assets ==="
+  - "Missing Asset: {{#validateAsset 'nonexistent' gameAssets}}❌ Valid{{else}}✅ Invalid (Expected){{/validateAsset}}"
+  - "Empty Key: {{#validateAsset '' gameAssets}}❌ Valid{{else}}✅ Invalid (Expected){{/validateAsset}}"
+  
+  - "=== URL Resolution Test ==="
+  - "Hero URL: {{#if (resolveAsset 'hero_portrait' gameAssets)}}✅ Resolved{{else}}❌ Failed{{/if}}"
+  - "Audio URL: {{#if (resolveAsset 'theme_music' gameAssets)}}✅ Resolved{{else}}❌ Failed{{/if}}"
+  - "Missing URL: {{#if (resolveAsset 'missing' gameAssets)}}❌ Resolved{{else}}✅ Failed (Expected){{/if}}"
+  
+  - goto: main_menu
+
+main_menu:
+  - "🏠 **Main Menu**"
+  - text: "What would you like to test next?"
+    choices:
+      - text: "Character Portraits"
+        goto: character_test
+      - text: "Background Images" 
+        goto: background_test
+      - text: "Audio System"
+        goto: audio_test
+      - text: "Asset Information"
+        goto: asset_info_test
+      - text: "Asset Validation"
+        goto: validation_test
+      - text: "Finish Demo"
+        goto: conclusion
+
+conclusion:
+  - "🎉 **Asset Demo Complete!**"
+  - "You've successfully tested with real, working URLs:"
+  - "• ✅ Random images from Picsum Photos service"
+  - "• ✅ Real audio files from SoundJay"
+  - "• ✅ Asset detection and validation"
+  - "• ✅ Image display with HTML generation"
+  - "• ✅ Audio playback with controls"
+  - "• ✅ File size formatting"
+  - "• ✅ Media type detection"
+  - "• ✅ Key normalization"
+  - "• ✅ URL resolution"
+  
+  - "**Final Asset Statistics:**"
+  - "• Assets loaded: {{assetCount gameAssets}}"
+  - "• Total size: {{formatFileSize 610000}}"
+  - "• Image assets: 4"
+  - "• Audio assets: 2"
+  
+  - "All URLs are working and will load real content! 🎭✨"

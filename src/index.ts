@@ -1,4 +1,3 @@
-
 export { VNEngine, createVNEngine } from './VNEngine'
 
 export * from './types'
@@ -24,7 +23,8 @@ export {
   type ComparisonHelpers,
   type MathHelpers,
   type StringHelpers,
-  type VNHelpers
+  type VNHelpers,
+  type AssetHelpers
 } from './core/helpers'
 
 export { 

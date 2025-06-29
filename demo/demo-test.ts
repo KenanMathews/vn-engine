@@ -253,7 +253,15 @@ export class YAMLTestFramework {
         loaded: false,
         isDLC: true,
         baseScript: "scripts/basic-demo.yaml"
-      }
+      },
+      {
+        name: "Asset Management Tests",
+        path: "test-cases/asset-demo-tests.yaml",
+        category: "Asset Management",
+        description: "Asset helpers and multimedia support",
+        priority: 8,
+        loaded: false
+      },
     ];
 
     this.renderFileGrid();

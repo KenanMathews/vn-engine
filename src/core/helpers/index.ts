@@ -1,9 +1,9 @@
-
 import { arrayHelpers, registerArrayHelpers, type ArrayHelpers } from './array';
 import { comparisonHelpers, registerComparisonHelpers, type ComparisonHelpers } from './comparison';
 import { mathHelpers, registerMathHelpers, type MathHelpers } from './math';
 import { stringHelpers, registerStringHelpers, type StringHelpers } from './string';
 import { vnHelpers, registerVNHelpers, type VNHelpers, getNestedValue, setNestedValue } from './vn-core';
+import { assetHelpers, registerAssetHelpers, type AssetHelpers } from './asset';
 
 export interface VNEngineHelpers {
   array: ArrayHelpers;
@@ -11,6 +11,7 @@ export interface VNEngineHelpers {
   math: MathHelpers;
   string: StringHelpers;
   vn: VNHelpers;
+  asset: AssetHelpers;
 }
 
 export const helpers: VNEngineHelpers = {
@@ -18,7 +19,8 @@ export const helpers: VNEngineHelpers = {
   comparison: comparisonHelpers,
   math: mathHelpers,
   string: stringHelpers,
-  vn: vnHelpers
+  vn: vnHelpers,
+  asset: assetHelpers
 };
 
 function isHandlebarsAvailable(): boolean {
@@ -42,7 +44,8 @@ export function registerAllHelpers(handlebars: any): void {
     registerComparisonHelpers(handlebars);    
     registerMathHelpers(handlebars);    
     registerStringHelpers(handlebars);    
-    registerVNHelpers(handlebars);    
+    registerVNHelpers(handlebars);
+    registerAssetHelpers(handlebars);
   } catch (error) {
     console.error('❌ Error registering VN Engine helpers:', error);
     throw error;
@@ -100,11 +103,14 @@ export function getAvailableHelpers(): {
       'repeat', 'padStart', 'padEnd', 'center', 'substring', 'words', 'wordCount', 'slugify',
       'typewriter', 'nameTag', 'dialogueFormat', 'parseMarkdown', 'colorText',
       
-      'hasFlag', 'getVar', 'setVar', 'hasVar', 'playerChose', 'formatTime', 'randomBool', 'debug'
+      'hasFlag', 'getVar', 'setVar', 'hasVar', 'playerChose', 'formatTime', 'randomBool', 'debug',
+      
+      'hasAsset', 'getAsset', 'resolveAsset', 'getAssetInfo', 'getMediaType', 'normalizeKey',
+      'assetCount', 'formatFileSize', 'validateAsset', 'showImage', 'playAudio', 'playVideo'
     ],
     standalone: [
       'All helper functions are available as JavaScript functions in the helpers object',
-      'Use helpers.array.first(), helpers.math.add(), helpers.string.capitalize(), etc.'
+      'Use helpers.array.first(), helpers.math.add(), helpers.string.capitalize(), helpers.asset.hasAsset(), etc.'
     ],
     description: 'When Handlebars is not available, all helper functions can still be used directly from the helpers object in JavaScript code.'
   };
@@ -116,11 +122,13 @@ export {
   mathHelpers,
   stringHelpers,
   vnHelpers,
+  assetHelpers,
   registerArrayHelpers,
   registerComparisonHelpers,
   registerMathHelpers,
   registerStringHelpers,
   registerVNHelpers,
+  registerAssetHelpers,
   getNestedValue,
   setNestedValue
 };
@@ -130,5 +138,6 @@ export type {
   ComparisonHelpers,
   MathHelpers,
   StringHelpers,
-  VNHelpers
+  VNHelpers,
+  AssetHelpers
 };

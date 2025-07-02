@@ -1,6 +1,6 @@
 {
   "name": "vn-engine",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "A powerful, flexible TypeScript library for creating visual novels and interactive narratives",
   "main": "dist/vn-engine.js",
@@ -17,7 +17,7 @@
     "type-check": "tsc --noEmit",
     "test": "node scripts/test-runner.js",
     "test:core": "node scripts/test-runner.js --only-core",
-    "test:performance": "node scripts/test-runner.js --only-performance", 
+    "test:performance": "node scripts/test-runner.js --only-performance",
     "test:edge-cases": "node scripts/test-runner.js --only-edge-cases",
     "test:package": "npm run build && npm run test",
     "test:ci": "npm run build && npm run test",
@@ -34,7 +34,7 @@
   },
   "keywords": [
     "visual-novel",
-    "interactive-fiction", 
+    "interactive-fiction",
     "handlebars",
     "typescript",
     "game-engine",
@@ -115,7 +115,7 @@
     ],
     "supportedNodeVersions": [
       "16.x",
-      "18.x", 
+      "18.x",
       "20.x"
     ],
     "testEnvironments": [

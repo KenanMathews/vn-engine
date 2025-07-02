@@ -62,6 +62,10 @@ export class StateManagement {
     return this.gameState.getVariable(key);
   }
 
+  setVariable(key: string, value: any): void {
+    this.gameState.setVariable(key, value);
+  }
+
   getChoiceHistory() {
     return this.gameState.getChoiceHistory();
   }

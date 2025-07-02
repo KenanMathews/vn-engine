@@ -291,6 +291,10 @@ export class VNEngine {
     return this.stateManager.getVariable(key);
   }
 
+  setVariable(key: string, value: any): void {
+    this.stateManager.setVariable(key, value);
+  }
+
   getChoiceHistory() {
     return this.stateManager.getChoiceHistory();
   }
@@ -305,7 +309,7 @@ export class VNEngine {
     error?: string;
   } {
     return {
-      version: '1.1.0',
+      version: '1.1.1',
       templateEngine: this.getTemplateEngineInfo(),
       isLoaded: this.getIsLoaded(),
       currentScene: this.getCurrentScene(),

@@ -1,4 +1,3 @@
-
 import type {
   ScriptResult,
   ParsedScene,
@@ -26,7 +25,6 @@ export class ScriptEngine {
     private templateManager: TemplateManager
   ) {}
 
-
   loadScenes(scenes: ParsedScene[]): void {
     this.scenes.clear();
     scenes.forEach((scene) => {
@@ -34,7 +32,7 @@ export class ScriptEngine {
     });
   }
 
-  startScene(sceneName: string): ScriptResult {
+  startScene(sceneName: string, instructionIndex: number = 0): ScriptResult {
     const scene = this.scenes.get(sceneName);
     if (!scene) {
       return {
@@ -44,11 +42,16 @@ export class ScriptEngine {
     }
 
     this.currentScene = sceneName;
-    this.currentInstructionIndex = 0;
+    this.currentInstructionIndex = instructionIndex; // Use provided index instead of 0
     this.pendingChoices = null;
 
     this.gameState.setCurrentScene(sceneName);
-    this.gameState.setCurrentInstruction(0);
+    this.gameState.setCurrentInstruction(instructionIndex);
+
+    // Validate instruction index
+    if (instructionIndex >= scene.instructions.length) {
+      return { type: "scene_complete" };
+    }
 
     return this.executeCurrentInstruction();
   }
@@ -121,7 +124,6 @@ export class ScriptEngine {
 
     return this.executeCurrentInstruction();
   }
-
 
   private executeCurrentInstruction(): ScriptResult {
     const scene = this.scenes.get(this.currentScene);
@@ -259,7 +261,6 @@ export class ScriptEngine {
     return this.startScene(instruction.target);
   }
 
-
   private executeActions(actions: UserAction[]): void {
     actions.forEach((action) => this.executeAction(action));
   }
@@ -292,7 +293,6 @@ export class ScriptEngine {
       console.error(`Error executing action ${action.type}:`, error);
     }
   }
-
 
   private filterAvailableChoices(choices: ChoiceOption[]): ChoiceOption[] {
     return choices.filter((choice) => {

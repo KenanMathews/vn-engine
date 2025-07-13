@@ -487,13 +487,14 @@ export async function runCoreTests() {
     const afterResetVar = engine.getVariable('testVar');
     
     const loadResult = engine.loadSave(saveData);
-    
-    assert.assertEqual(loadResult, true, 'Load should succeed', { 
+    const loadSuccess = loadResult.type !== 'error';
+    assert.assertEqual(loadSuccess, true, 'Load should succeed', {
       engine,
       packageInfo,
       saveData,
       loadResult,
-      afterResetVar
+      loadSuccess,
+      resultType: loadResult.type
     });
     
     const afterLoadVar = engine.getVariable('testVar');

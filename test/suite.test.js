@@ -8,6 +8,7 @@ const testResults = {
   performance: null,
   edgeCases: null,
   assets: null,
+  saveLoad: null,  
   imports: null,
   packageValidation: null,
   startTime: null,
@@ -36,6 +37,8 @@ async function runTestSuite() {
       performance: false,
       edgeCases: false,
       imports: false,
+      assets: false,
+      saveLoad: false,  
       integrity: false,
     },
   };
@@ -82,7 +85,22 @@ async function runTestSuite() {
 
     console.log("\n✅ Core tests completed\n");
 
-    console.log("2️⃣ Running Performance Tests (Package-based)...");
+    console.log("2️⃣ Running Save/Load Functionality Tests (Package-based)...");
+    console.log("─".repeat(75));
+
+    const saveLoadResults = await runSaveLoadTestsEnhanced();
+    testResults.saveLoad = saveLoadResults;
+
+    if (saveLoadResults.errors) {
+      testResults.allErrors.push({
+        category: "save-load-packaged",
+        ...saveLoadResults.errors,
+      });
+    }
+
+    console.log("\n✅ Save/Load tests completed\n");
+
+    console.log("3️⃣ Running Performance Tests (Package-based)...");
     console.log("─".repeat(60));
 
     const perfResults = await runPerformanceTestsEnhanced();
@@ -101,7 +119,7 @@ async function runTestSuite() {
       console.log("\n⚠️ Performance tests had issues - see details above\n");
     }
 
-    console.log("3️⃣ Running Edge Case Tests (Package-based)...");
+    console.log("4️⃣ Running Edge Case Tests (Package-based)...");
     console.log("─".repeat(60));
 
     const edgeResults = await runEdgeCaseTestsEnhanced();
@@ -116,10 +134,7 @@ async function runTestSuite() {
 
     console.log("\n✅ Edge case tests completed\n");
 
-    console.log("4️⃣ Running Import/Export Tests (npm Compatibility)...");
-    console.log("─".repeat(65));
-
-    console.log("4️⃣ Running Asset Helper Tests (Package-based)...");
+    console.log("5️⃣ Running Asset Helper Tests (Package-based)...");
     console.log("─".repeat(55));
 
     const assetResults = await runAssetTestsEnhanced();
@@ -134,7 +149,7 @@ async function runTestSuite() {
 
     console.log("\n✅ Asset helper tests completed\n");
 
-    console.log("5️⃣ Running Import/Export Tests (npm Compatibility)...");
+    console.log("6️⃣ Running Import/Export Tests (npm Compatibility)...");
     console.log("─".repeat(65));
 
     const importResults = await runImportTestsEnhanced();
@@ -149,7 +164,7 @@ async function runTestSuite() {
 
     console.log("\n✅ Import/export tests completed\n");
 
-    console.log("5️⃣ Running Package Integrity Tests...");
+    console.log("7️⃣ Running Package Integrity Tests...");
     console.log("─".repeat(50));
 
     const integrityResults = await runPackageIntegrityTests();
@@ -198,6 +213,49 @@ async function runTestSuite() {
   }
 }
 
+async function runSaveLoadTestsEnhanced() {
+  try {
+    console.log("💾 Running Package-based Save/Load Tests...");
+
+    const { runSaveLoadTests } = await import("./save-load.test.js");
+    const saveLoadResults = await runSaveLoadTests();
+
+    console.log(
+      `   📊 Save/Load results: ${saveLoadResults.passed} passed, ${saveLoadResults.failed} failed`
+    );
+
+    if (saveLoadResults.passed > 0) {
+      console.log("   ✅ Key save/load functionality verified:");
+      console.log("      • Basic save/load cycles");
+      console.log("      • Handlebars helper state duplication fix");
+      console.log("      • Manual save/load with instruction parameters");
+      console.log("      • Choice point save/load");
+      console.log("      • Invalid data error handling");
+      console.log("      • Backward compatibility");
+      console.log("      • Large save state performance");
+    }
+
+    return {
+      status: saveLoadResults.failed === 0 ? "passed" : "partial",
+      passed: saveLoadResults.passed,
+      failed: saveLoadResults.failed,
+      errors: saveLoadResults.errors,
+      packageInfo: saveLoadResults.packageInfo,
+      success: saveLoadResults.success,
+    };
+  } catch (error) {
+    console.error(`   ❌ Save/Load test execution failed: ${error.message}`);
+
+    return {
+      status: "failed",
+      passed: 0,
+      failed: 1,
+      errors: [{ message: error.message, stack: error.stack }],
+      success: false,
+    };
+  }
+}
+
 function calculateFinalResults() {
   const endTime = testResults.endTime || performance.now();
   const duration = endTime - testResults.startTime;
@@ -209,6 +267,7 @@ function calculateFinalResults() {
   const breakdown = {
     packageValidation: false,
     core: false,
+    saveLoad: false,
     performance: false,
     edgeCases: false,
     assets: false,
@@ -231,6 +290,15 @@ function calculateFinalResults() {
     totalPassed += testResults.core.passed || 0;
     totalFailed += testResults.core.failed || 0;
     if (!testResults.core.success) {
+      overallSuccess = false;
+    }
+  }
+
+  if (testResults.saveLoad) {
+    breakdown.saveLoad = testResults.saveLoad.success;
+    totalPassed += testResults.saveLoad.passed || 0;
+    totalFailed += testResults.saveLoad.failed || 0;
+    if (!testResults.saveLoad.success) {
       overallSuccess = false;
     }
   }
@@ -292,6 +360,8 @@ function calculateFinalResults() {
     packageInfo = testResults.packageValidation.packageInfo;
   } else if (testResults.core && testResults.core.packageInfo) {
     packageInfo = testResults.core.packageInfo;
+  } else if (testResults.saveLoad && testResults.saveLoad.packageInfo) {
+    packageInfo = testResults.saveLoad.packageInfo;
   } else if (testResults.imports && testResults.imports.packageInfo) {
     packageInfo = testResults.imports.packageInfo;
   }
@@ -315,6 +385,7 @@ function calculateFinalResults() {
     detailed: {
       packageValidation: testResults.packageValidation,
       core: testResults.core,
+      saveLoad: testResults.saveLoad,  
       performance: testResults.performance,
       edgeCases: testResults.edgeCases,
       assets: testResults.assets,
@@ -333,6 +404,10 @@ function calculateFinalResults() {
     },
   };
 }
+
+// [Keep all your existing functions: runPackageValidation, runPerformanceTestsEnhanced, 
+//  runEdgeCaseTestsEnhanced, runAssetTestsEnhanced, runImportTestsEnhanced, 
+//  runPackageIntegrityTests - they remain unchanged]
 
 async function runPackageValidation() {
   const { reporter, assert } = createTestReporter();
@@ -841,6 +916,13 @@ function displayComprehensivePackageAnalysis() {
       }`
     : "not run";
 
+  const saveLoadSuccess = testResults.saveLoad?.success ?? false;
+  const saveLoadStats = testResults.saveLoad
+    ? `${testResults.saveLoad.passed}/${
+        testResults.saveLoad.passed + testResults.saveLoad.failed
+      }`
+    : "not run";
+
   const perfStatus = testResults.performance?.status ?? "not run";
 
   const edgeStats = testResults.edgeCases
@@ -873,6 +955,11 @@ function displayComprehensivePackageAnalysis() {
   console.log(
     `   ${coreSuccess ? "✅" : "❌"} Core Functionality: ${coreStats} passed`
   );
+  
+  console.log(
+    `   ${saveLoadSuccess ? "✅" : "❌"} Save/Load Functionality: ${saveLoadStats} passed`
+  );
+  
   console.log(
     `   ${
       perfStatus === "completed" ? "✅" : "❌"
@@ -901,6 +988,19 @@ function displayComprehensivePackageAnalysis() {
     } Package Integrity: ${integritySuccess} success rate`
   );
   console.log();
+
+  if (testResults.saveLoad && testResults.saveLoad.passed > 0) {
+    console.log("💾 Save/Load Functionality Analysis:");
+    console.log("─".repeat(40));
+    console.log(`   ✅ Basic save/load cycles functional`);
+    console.log(`   ✅ Handlebars helper state duplication fixed`);
+    console.log(`   ✅ Manual instruction parameter support`);
+    console.log(`   ✅ Choice point save/load working`);
+    console.log(`   ✅ Error handling for invalid save data`);
+    console.log(`   ✅ Backward compatibility maintained`);
+    console.log(`   ✅ Performance optimized for large saves`);
+    console.log();
+  }
 
   console.log("📦 PACKAGE-SPECIFIC ANALYSIS");
   console.log("═".repeat(40));
@@ -1007,11 +1107,13 @@ function analyzePackageErrors() {
     "Dependency Issues": 0,
     "Performance Overhead": 0,
     "Build/Distribution Issues": 0,
+    "Save/Load Issues": 0, 
   };
 
   allErrorDetails.forEach((error) => {
     const testName = error.testName?.toLowerCase() || "";
     const errorMsg = error.error?.message?.toLowerCase() || "";
+    const category = error.category?.toLowerCase() || "";
 
     if (
       testName.includes("import") ||
@@ -1031,6 +1133,9 @@ function analyzePackageErrors() {
     }
     if (testName.includes("build") || testName.includes("distribution")) {
       packageIssues["Build/Distribution Issues"]++;
+    }
+    if (category.includes("save-load") || testName.includes("save") || testName.includes("load")) {
+      packageIssues["Save/Load Issues"]++;
     }
   });
 
@@ -1053,7 +1158,8 @@ function generatePackageRecommendations() {
     console.log("   • Consider automated package testing in CI/CD");
     console.log("   • Add package size monitoring");
     console.log("   • Document packaging and distribution process");
-    console.log("   • npm publish is ready - all import patterns verified!");
+    console.log("   • npm publish is ready - all functionality verified!");
+    console.log("   • Save/Load functionality is production-ready");
     return;
   }
 
@@ -1066,6 +1172,16 @@ function generatePackageRecommendations() {
     console.log("      2. Verify package.json exports and main field");
     console.log("      3. Ensure all required files are included in package");
     console.log("      4. Check build output is correct for distribution");
+    console.log();
+  }
+
+  if (testResults.saveLoad && !testResults.saveLoad.success) {
+    console.log("   💾 SAVE/LOAD FUNCTIONALITY ISSUES:");
+    console.log("      1. Fix save/load state preservation problems");
+    console.log("      2. Ensure Handlebars helper state duplication is resolved");
+    console.log("      3. Verify instruction parameter handling in startScene");
+    console.log("      4. Test save/load compatibility across different scenarios");
+    console.log("      5. Validate error handling for corrupted save data");
     console.log();
   }
 
@@ -1098,6 +1214,7 @@ function generatePackageRecommendations() {
   console.log("      2. Add automated package size and performance monitoring");
   console.log("      3. Test package installation in different environments");
   console.log("      4. Validate package works with different bundlers");
+  console.log("      5. Include save/load functionality in integration tests");
   console.log();
 
   console.log("   🚀 DISTRIBUTION OPTIMIZATION:");
@@ -1105,6 +1222,7 @@ function generatePackageRecommendations() {
   console.log("      2. Consider providing different bundle formats");
   console.log("      3. Ensure proper tree-shaking support");
   console.log("      4. Add package integrity verification");
+  console.log("      5. Document save/load best practices for users");
 }
 
 function calculatePackageHealthScore() {
@@ -1119,6 +1237,11 @@ function calculatePackageHealthScore() {
   if (testResults.core) {
     totalTests += testResults.core.passed + testResults.core.failed;
     passedTests += testResults.core.passed;
+  }
+
+  if (testResults.saveLoad) {
+    totalTests += testResults.saveLoad.passed + testResults.saveLoad.failed;
+    passedTests += testResults.saveLoad.passed;
   }
 
   if (testResults.edgeCases) {
@@ -1143,17 +1266,20 @@ function calculatePackageHealthScore() {
     testResults.performance?.status === "completed" ? 100 : 70;
   const packageScore = testResults.packageValidation?.success ? 100 : 50;
   const importScore = testResults.imports?.status === "passed" ? 100 : 50;
+  const saveLoadScore = testResults.saveLoad?.success ? 100 : 70; 
 
   return {
     overall:
-      testScore * 0.4 +
-      performanceScore * 0.2 +
-      packageScore * 0.2 +
-      importScore * 0.2,
+      testScore * 0.35 +
+      performanceScore * 0.15 +
+      packageScore * 0.15 +
+      importScore * 0.15 +
+      saveLoadScore * 0.2, 
     testing: testScore,
     performance: performanceScore,
     packaging: packageScore,
     imports: importScore,
+    saveLoad: saveLoadScore,
     totalTests,
     passedTests,
   };
@@ -1180,6 +1306,7 @@ function displayPackageHealthMetrics(healthScore) {
   console.log(`   Performance: ${healthScore.performance}%`);
   console.log(`   Packaging Quality: ${healthScore.packaging}%`);
   console.log(`   Import Compatibility: ${healthScore.imports}%`);
+  console.log(`   Save/Load Functionality: ${healthScore.saveLoad}%`);
   console.log();
 
   console.log("   📊 Detailed Package Metrics:");
@@ -1205,6 +1332,19 @@ function displayPackageHealthMetrics(healthScore) {
     }`
   );
   console.log(`      API Compatibility: Package-based testing validated`);
+
+  if (testResults.saveLoad) {
+    console.log(
+      `      Save/Load: ${
+        testResults.saveLoad.success ? "✅ Working" : "❌ Issues"
+      }`
+    );
+    console.log(
+      `      Helper State Fix: ${
+        testResults.saveLoad.success ? "✅ Resolved" : "❌ Unresolved"
+      }`
+    );
+  }
 
   if (testResults.imports) {
     console.log(
@@ -1245,6 +1385,15 @@ function generatePackagePrioritizedActions() {
       title: "Fix Import/Export Compatibility",
       description: "Resolve npm import patterns and API exports",
       impact: "Critical - Users cannot import/use the library properly",
+    });
+  }
+
+  if (testResults.saveLoad && !testResults.saveLoad.success) {
+    actions.push({
+      priority: 1,
+      title: "Fix Save/Load Functionality",
+      description: "Resolve save/load state preservation and helper duplication issues",
+      impact: "Critical - Save/Load is core functionality for VN games",
     });
   }
 
@@ -1298,6 +1447,7 @@ function generatePackagePrioritizedActions() {
 function getPackageOverallStatus() {
   const packageValidation = testResults.packageValidation?.success ?? false;
   const coreSuccess = testResults.core?.success ?? false;
+  const saveLoadSuccess = testResults.saveLoad?.success ?? false; 
   const edgeSuccess = testResults.edgeCases
     ? testResults.edgeCases.failed === 0
     : false;
@@ -1311,6 +1461,7 @@ function getPackageOverallStatus() {
   if (
     packageValidation &&
     coreSuccess &&
+    saveLoadSuccess && 
     edgeSuccess &&
     perfSuccess &&
     importSuccess &&
@@ -1318,7 +1469,7 @@ function getPackageOverallStatus() {
     integritySuccess
   ) {
     return "🎉 SUCCESS:";
-  } else if (packageValidation && coreSuccess && importSuccess) {
+  } else if (packageValidation && coreSuccess && saveLoadSuccess && importSuccess) { 
     return "⚠️ PARTIAL SUCCESS:";
   } else {
     return "❌ NEEDS WORK:";

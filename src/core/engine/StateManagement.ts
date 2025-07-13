@@ -1,4 +1,3 @@
-
 export interface SaveData {
   gameState: any;
   timestamp: string;
@@ -52,6 +51,10 @@ export class StateManagement {
 
   getCurrentScene(): string {
     return this.gameState.getCurrentScene();
+  }
+
+  getCurrentInstruction(): number {
+    return this.gameState.getCurrentInstruction();
   }
 
   hasFlag(flag: string): boolean {

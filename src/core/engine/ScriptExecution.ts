@@ -1,4 +1,3 @@
-
 import type { ScriptResult } from '../../types';
 import type { ScriptEngine } from '../script';
 import type { EventEmitter } from '../events/EventEmitter';
@@ -10,8 +9,8 @@ export class ScriptExecution {
     private events: EventEmitter<VNEngineEvents>
   ) {}
 
-  startScene(sceneName: string): ScriptResult {
-    const result = this.scriptEngine.startScene(sceneName);
+  startScene(sceneName: string, instructionIndex: number = 0): ScriptResult {
+    const result = this.scriptEngine.startScene(sceneName, instructionIndex);
     this.emitResult(result);
     return result;
   }

@@ -1233,12 +1233,20 @@ const history = vnEngine.gameState.getChoiceHistory()
 ### Save/Load System
 ```typescript
 // Save game state
-const saveData = vnEngine.getGameState()
-localStorage.setItem('save', JSON.stringify(saveData))
+const saveFile = vnEngine.createSave({
+  playerName: 'Alice',
+  playtime: 120,
+  checkpoint: 'forest_entrance'
+})
 
-// Load game state  
-const saveData = JSON.parse(localStorage.getItem('save'))
-vnEngine.setGameState(saveData)
+// Load with error handling
+const loadResult = vnEngine.loadSave(saveFile.gameState)
+const loadSuccess = loadResult.type !== 'error'
+
+if (loadSuccess) {
+  console.log('Restored to scene:', vnEngine.getCurrentScene())
+  console.log('At instruction:', vnEngine.getCurrentInstruction())
+}
 ```
 
 ## 📋 Core Examples

@@ -536,12 +536,22 @@ export async function runEdgeCaseTests() {
     
     const loadResult = engine.loadSave(invalidSaveData);
     
-    assert.assertEqual(loadResult, false, 'Should reject invalid save data', { 
+    assert.assertEqual(loadResult.type, 'error', 'Should return error for invalid save data', { 
       engine,
       packageInfo,
       invalidSaveData,
       loadResult
     });
+    
+    assert.assertDefined(loadResult.error, 'Should include error message', {
+      engine,
+      packageInfo,
+      loadResult
+    });
+    
+    console.log(`   ✅ Invalid save data properly rejected: ${loadResult.error}`);
+    
+    engine.destroy();
   });
 
   test('Corrupted Save Data (Package)', async () => {
@@ -557,12 +567,22 @@ export async function runEdgeCaseTests() {
     
     const loadResult = engine.loadSave(corruptedSaveData);
     
-    assert.assertEqual(loadResult, false, 'Should reject corrupted save data', { 
+    assert.assertEqual(loadResult.type, 'error', 'Should return error for corrupted save data', { 
       engine,
       packageInfo,
       corruptedSaveData,
       loadResult
     });
+    
+    assert.assertDefined(loadResult.error, 'Should include error message for corrupted data', {
+      engine,
+      packageInfo,
+      loadResult
+    });
+    
+    console.log(`   ✅ Corrupted save data properly rejected: ${loadResult.error}`);
+    
+    engine.destroy();
   });
 
   test('State Manipulation During Execution (Package)', async () => {

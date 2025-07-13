@@ -1,4 +1,3 @@
-
 import type { ScriptResult, ParsedScene } from "./types";
 import type { ScriptUpgradeOptions, UpgradeResult, ValidationResult } from "./types/upgrade";
 import { GameStateManager } from "./core/state";
@@ -184,6 +183,22 @@ export class VNEngine {
     return this.execution.makeChoice(choiceIndex);
   }
 
+  loadSave(gameState: any): ScriptResult {
+    this.setGameState(gameState);
+    
+    const currentScene = this.stateManager.getCurrentScene();
+    const currentInstruction = this.stateManager.getCurrentInstruction();
+    
+    if (currentScene) {
+      return this.execution.startScene(currentScene, currentInstruction);
+    } else {
+      return {
+        type: "error",
+        error: "No current scene found in game state"
+      };
+    }
+  }
+
   getCurrentResult(): ScriptResult | null {
     return this.currentResult;
   }
@@ -206,14 +221,6 @@ export class VNEngine {
 
   createSave(metadata?: SaveData['metadata']): SaveData {
     return this.stateManager.exportForSave(metadata);
-  }
-
-  loadSave(saveData: SaveData): boolean {
-    if (this.stateManager.validateSaveData(saveData)) {
-      this.stateManager.importFromSave(saveData);
-      return true;
-    }
-    return false;
   }
 
   parseTemplate(template: string): string {
@@ -283,6 +290,10 @@ export class VNEngine {
     return this.stateManager.getCurrentScene();
   }
 
+  getCurrentInstruction(): number {
+    return this.stateManager.getCurrentInstruction();
+  }
+
   hasFlag(flag: string): boolean {
     return this.stateManager.hasFlag(flag);
   }
@@ -309,7 +320,7 @@ export class VNEngine {
     error?: string;
   } {
     return {
-      version: '1.1.1',
+      version: '1.2.0',
       templateEngine: this.getTemplateEngineInfo(),
       isLoaded: this.getIsLoaded(),
       currentScene: this.getCurrentScene(),

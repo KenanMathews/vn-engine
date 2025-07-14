@@ -436,7 +436,7 @@ character_creation:
             value: "mage"
         goto: game_start
       - text: "Necromancer (NEW!)"
-        condition: "hasFlag 'directors_cut'"
+        condition: "{{hasFlag 'directors_cut'}}"
         actions:
           - type: setVar
             key: player_class
@@ -1325,7 +1325,7 @@ shop:
   - text: "What would you like?"
     choices:
       - text: "Sword (50 coins)"
-        condition: "gte coins 50"
+        condition: "{{gte coins 50}}"
         actions:
           - type: addVar
             key: coins
@@ -1335,7 +1335,7 @@ shop:
             item: { name: "Iron Sword", damage: 10 }
         goto: shop
       - text: "Potion (20 coins)"
-        condition: "gte coins 20"
+        condition: "{{gte coins 20}}"
         actions:
           - type: addVar
             key: coins

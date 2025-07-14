@@ -303,7 +303,7 @@ export class ScriptEngine {
 
   private evaluateCondition(condition: string): boolean {
     try {
-      const result = this.renderTemplate(`{{${condition}}}`);
+      const result = this.renderTemplate(condition);
       return result === "true";
     } catch (error) {
       console.error("Condition evaluation error:", error);

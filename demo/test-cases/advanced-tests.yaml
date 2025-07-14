@@ -105,21 +105,21 @@ tests:
         - text: "What do you want to do?"
           choices:
             - text: "Buy expensive item (150 coins)"
-              condition: "gte player_coins 150"
+              condition: "{{gte player_coins 150}}"
               actions:
                 - type: addVar
                   key: player_coins
                   value: -150
               goto: expensive_purchase
             - text: "Buy cheap item (50 coins)"
-              condition: "gte player_coins 50"
+              condition: "{{gte player_coins 50}}"
               actions:
                 - type: addVar
                   key: player_coins
                   value: -50
               goto: cheap_purchase
             - text: "Level up (Requires level 5+)"
-              condition: "gte player_level 5"
+              condition: "{{gte player_level 5}}"
               actions:
                 - type: addVar
                   key: player_level

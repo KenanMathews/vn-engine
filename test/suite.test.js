@@ -5,6 +5,7 @@ import { getPackager, cleanupTestPackage } from "./utils/packager.js";
 const testResults = {
   packageSetup: null,
   core: null,
+  helpers: null,
   performance: null,
   edgeCases: null,
   assets: null,
@@ -34,6 +35,7 @@ async function runTestSuite() {
     breakdown: {
       packageValidation: false,
       core: false,
+      helpers:false,
       performance: false,
       edgeCases: false,
       imports: false,
@@ -84,6 +86,21 @@ async function runTestSuite() {
     }
 
     console.log("\n✅ Core tests completed\n");
+
+    console.log("2️⃣ Running Helper Function Tests (Package-based)...");
+    console.log("─".repeat(70));
+
+    const helperResults = await runHelperTestsEnhanced();
+    testResults.helpers = helperResults;
+
+    if (helperResults.errors) {
+      testResults.allErrors.push({
+        category: "helper-functions-packaged",
+        ...helperResults.errors,
+      });
+    }
+
+    console.log("\n✅ Helper function tests completed\n");
 
     console.log("2️⃣ Running Save/Load Functionality Tests (Package-based)...");
     console.log("─".repeat(75));
@@ -213,6 +230,48 @@ async function runTestSuite() {
   }
 }
 
+async function runHelperTestsEnhanced() {
+  try {
+    console.log("🔧 Running Package-based Helper Function Tests...");
+
+    const { runHelperTests } = await import("./helpers.test.js");
+    const helperResults = await runHelperTests();
+
+    console.log(
+      `   📊 Helper results: ${helperResults.passed} passed, ${helperResults.failed} failed`
+    );
+
+    if (helperResults.passed > 0) {
+      console.log("   ✅ Key helper functionality verified:");
+      console.log("      • Array helpers (first, last, filter, map, etc.)");
+      console.log("      • Comparison helpers (eq, ne, gt, lt, and, or, etc.)");
+      console.log("      • Math helpers (add, subtract, min, max, etc.)");
+      console.log("      • String helpers (uppercase, lowercase, trim, etc.)");
+      console.log("      • VN helpers (flags, variables, choice history)");
+      console.log("      • Handlebars integration (if available)");
+    }
+
+    return {
+      status: helperResults.failed === 0 ? "passed" : "partial",
+      passed: helperResults.passed,
+      failed: helperResults.failed,
+      errors: helperResults.errors,
+      packageInfo: helperResults.packageInfo,
+      success: helperResults.success,
+    };
+  } catch (error) {
+    console.error(`   ❌ Helper test execution failed: ${error.message}`);
+
+    return {
+      status: "failed",
+      passed: 0,
+      failed: 1,
+      errors: [{ message: error.message, stack: error.stack }],
+      success: false,
+    };
+  }
+}
+
 async function runSaveLoadTestsEnhanced() {
   try {
     console.log("💾 Running Package-based Save/Load Tests...");
@@ -267,6 +326,7 @@ function calculateFinalResults() {
   const breakdown = {
     packageValidation: false,
     core: false,
+    helpers: false,
     saveLoad: false,
     performance: false,
     edgeCases: false,
@@ -290,6 +350,15 @@ function calculateFinalResults() {
     totalPassed += testResults.core.passed || 0;
     totalFailed += testResults.core.failed || 0;
     if (!testResults.core.success) {
+      overallSuccess = false;
+    }
+  }
+
+  if (testResults.helpers) {
+    breakdown.helpers = testResults.helpers.success;
+    totalPassed += testResults.helpers.passed || 0;
+    totalFailed += testResults.helpers.failed || 0;
+    if (!testResults.helpers.success) {
       overallSuccess = false;
     }
   }
@@ -385,6 +454,7 @@ function calculateFinalResults() {
     detailed: {
       packageValidation: testResults.packageValidation,
       core: testResults.core,
+      helpers: testResults.helpers,
       saveLoad: testResults.saveLoad,  
       performance: testResults.performance,
       edgeCases: testResults.edgeCases,
@@ -405,9 +475,6 @@ function calculateFinalResults() {
   };
 }
 
-// [Keep all your existing functions: runPackageValidation, runPerformanceTestsEnhanced, 
-//  runEdgeCaseTestsEnhanced, runAssetTestsEnhanced, runImportTestsEnhanced, 
-//  runPackageIntegrityTests - they remain unchanged]
 
 async function runPackageValidation() {
   const { reporter, assert } = createTestReporter();
@@ -916,6 +983,13 @@ function displayComprehensivePackageAnalysis() {
       }`
     : "not run";
 
+  const helperSuccess = testResults.helpers?.success ?? false;
+  const helperStats = testResults.helpers
+    ? `${testResults.helpers.passed}/${
+        testResults.helpers.passed + testResults.helpers.failed
+      }`
+    : "not run";
+
   const saveLoadSuccess = testResults.saveLoad?.success ?? false;
   const saveLoadStats = testResults.saveLoad
     ? `${testResults.saveLoad.passed}/${
@@ -955,6 +1029,10 @@ function displayComprehensivePackageAnalysis() {
   console.log(
     `   ${coreSuccess ? "✅" : "❌"} Core Functionality: ${coreStats} passed`
   );
+
+  console.log(
+    `   ${helperSuccess ? "✅" : "❌"} Helper Functions: ${helperStats} passed`
+  );
   
   console.log(
     `   ${saveLoadSuccess ? "✅" : "❌"} Save/Load Functionality: ${saveLoadStats} passed`
@@ -988,6 +1066,18 @@ function displayComprehensivePackageAnalysis() {
     } Package Integrity: ${integritySuccess} success rate`
   );
   console.log();
+
+   if (testResults.helpers && testResults.helpers.passed > 0) {
+    console.log("🔧 Helper Function Analysis:");
+    console.log("─".repeat(35));
+    console.log(`   ✅ Array helper functions functional`);
+    console.log(`   ✅ Comparison helper functions functional`);
+    console.log(`   ✅ Math helper functions functional`);
+    console.log(`   ✅ String helper functions functional`);
+    console.log(`   ✅ VN-specific helper functions functional`);
+    console.log(`   ✅ Template engine integration working`);
+    console.log();
+  }
 
   if (testResults.saveLoad && testResults.saveLoad.passed > 0) {
     console.log("💾 Save/Load Functionality Analysis:");
@@ -1239,6 +1329,11 @@ function calculatePackageHealthScore() {
     passedTests += testResults.core.passed;
   }
 
+  if (testResults.helpers) {
+    totalTests += testResults.helpers.passed + testResults.helpers.failed;
+    passedTests += testResults.helpers.passed;
+  }
+
   if (testResults.saveLoad) {
     totalTests += testResults.saveLoad.passed + testResults.saveLoad.failed;
     passedTests += testResults.saveLoad.passed;
@@ -1267,19 +1362,22 @@ function calculatePackageHealthScore() {
   const packageScore = testResults.packageValidation?.success ? 100 : 50;
   const importScore = testResults.imports?.status === "passed" ? 100 : 50;
   const saveLoadScore = testResults.saveLoad?.success ? 100 : 70; 
+  const helperScore = testResults.helpers?.success ? 100 : 70; 
 
   return {
     overall:
-      testScore * 0.35 +
+      testScore * 0.3 +
       performanceScore * 0.15 +
       packageScore * 0.15 +
       importScore * 0.15 +
-      saveLoadScore * 0.2, 
+      saveLoadScore * 0.15 + 
+      helperScore * 0.1, 
     testing: testScore,
     performance: performanceScore,
     packaging: packageScore,
     imports: importScore,
     saveLoad: saveLoadScore,
+    helpers: helperScore,
     totalTests,
     passedTests,
   };
@@ -1447,6 +1545,7 @@ function generatePackagePrioritizedActions() {
 function getPackageOverallStatus() {
   const packageValidation = testResults.packageValidation?.success ?? false;
   const coreSuccess = testResults.core?.success ?? false;
+  const helperSuccess = testResults.helpers?.success ?? false; 
   const saveLoadSuccess = testResults.saveLoad?.success ?? false; 
   const edgeSuccess = testResults.edgeCases
     ? testResults.edgeCases.failed === 0
@@ -1461,6 +1560,7 @@ function getPackageOverallStatus() {
   if (
     packageValidation &&
     coreSuccess &&
+    helperSuccess &&
     saveLoadSuccess && 
     edgeSuccess &&
     perfSuccess &&

@@ -1,4 +1,3 @@
-
 import type { ChoiceRecord, RenderableState } from '../../types';
 
 export interface VNHelpers {
@@ -24,43 +23,74 @@ export interface VNHelpers {
 }
 
 function getNestedValue(obj: any, path: string): any {
-  if (!obj || !path) return undefined;
-  return path.split('.').reduce((current, key) => current?.[key], obj);
+  if (!obj || !path || typeof path !== 'string') return undefined;
+  
+  return path.split('.').reduce((current, key) => {
+    return (current != null && typeof current === 'object' && key in current) 
+      ? current[key] 
+      : undefined;
+  }, obj);
 }
 
 function setNestedValue(obj: any, path: string, value: any): void {
-  if (!obj) return;
+  if (!obj || !path || typeof path !== 'string') return;
+  
   const parts = path.split('.');
   let current = obj;
   
   for (let i = 0; i < parts.length - 1; i++) {
-    if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
-      current[parts[i]] = {};
+    const key = parts[i];
+    
+    if (current[key] == null || typeof current[key] !== 'object' || Array.isArray(current[key])) {
+      current[key] = {};
     }
-    current = current[parts[i]];
+    current = current[key];
   }
+  
   current[parts[parts.length - 1]] = value;
 }
 
 function safeNumber(value: any, fallback: number = 0): number {
+  if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
+    return value;
+  }
   const num = Number(value);
-  return isNaN(num) ? fallback : num;
+  return (isNaN(num) || !isFinite(num)) ? fallback : num;
+}
+
+function safeString(value: any): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  try {
+    return String(value);
+  } catch {
+    return '';
+  }
 }
 
 export const vnHelpers: VNHelpers = {
   hasFlag(flagName: string, context: RenderableState): boolean {
-    return context.storyFlags?.includes(flagName) || false;
+    if (!flagName || typeof flagName !== 'string') return false;
+    return Array.isArray(context.storyFlags) && context.storyFlags.includes(flagName);
   },
 
   addFlag(flagName: string, context: RenderableState): void {
-    if (!context.storyFlags) context.storyFlags = [];
+    if (!flagName || typeof flagName !== 'string') return;
+    
+    if (!Array.isArray(context.storyFlags)) {
+      context.storyFlags = [];
+    }
+    
     if (!context.storyFlags.includes(flagName)) {
       context.storyFlags.push(flagName);
     }
   },
 
   removeFlag(flagName: string, context: RenderableState): void {
-    if (!context.storyFlags) return;
+    if (!flagName || typeof flagName !== 'string' || !Array.isArray(context.storyFlags)) {
+      return;
+    }
+    
     const index = context.storyFlags.indexOf(flagName);
     if (index > -1) {
       context.storyFlags.splice(index, 1);
@@ -68,6 +98,8 @@ export const vnHelpers: VNHelpers = {
   },
 
   toggleFlag(flagName: string, context: RenderableState): boolean {
+    if (!flagName || typeof flagName !== 'string') return false;
+    
     if (vnHelpers.hasFlag(flagName, context)) {
       vnHelpers.removeFlag(flagName, context);
       return false;
@@ -78,30 +110,57 @@ export const vnHelpers: VNHelpers = {
   },
 
   getVar(key: string, defaultValue: any = undefined, context?: RenderableState): any {
-    if (!context?.variables) return defaultValue;
+    if (!key || typeof key !== 'string' || !context?.variables) {
+      return defaultValue;
+    }
+    
     const value = getNestedValue(context.variables, key);
     return value !== undefined ? value : defaultValue;
   },
 
   setVar(key: string, value: any, context: RenderableState): void {
-    if (!context.variables) context.variables = {};
+    if (!key || typeof key !== 'string' || !context) return;
+    
+    if (!context.variables || typeof context.variables !== 'object') {
+      context.variables = {};
+    }
+    
     setNestedValue(context.variables, key, value);
   },
 
   hasVar(key: string, context: RenderableState): boolean {
+    if (!key || typeof key !== 'string' || !context?.variables) {
+      return false;
+    }
+    
     return getNestedValue(context.variables, key) !== undefined;
   },
 
   incrementVar(key: string, amount: number, context: RenderableState): number {
+    if (!key || typeof key !== 'string' || !context) {
+      return 0;
+    }
+    
     const currentValue = safeNumber(vnHelpers.getVar(key, 0, context));
-    const newValue = currentValue + safeNumber(amount);
+    const incrementAmount = safeNumber(amount);
+    const newValue = currentValue + incrementAmount;
+    
     vnHelpers.setVar(key, newValue, context);
     return newValue;
   },
 
   playerChose(choiceText: string, inScene?: string, context?: RenderableState): boolean {
-    if (!context?.choiceHistory) return false;
+    if (!choiceText || typeof choiceText !== 'string' || !context?.choiceHistory) {
+      return false;
+    }
+    
+    if (!Array.isArray(context.choiceHistory)) {
+      return false;
+    }
+    
     return context.choiceHistory.some(choice => {
+      if (!choice || typeof choice !== 'object') return false;
+      
       const textMatches = choice.choiceText === choiceText;
       const sceneMatches = !inScene || choice.scene === inScene;
       return textMatches && sceneMatches;
@@ -109,135 +168,310 @@ export const vnHelpers: VNHelpers = {
   },
 
   getLastChoice(context: RenderableState): ChoiceRecord | undefined {
-    if (!context.choiceHistory || context.choiceHistory.length === 0) return undefined;
+    if (!context?.choiceHistory || !Array.isArray(context.choiceHistory) || context.choiceHistory.length === 0) {
+      return undefined;
+    }
+    
     return context.choiceHistory[context.choiceHistory.length - 1];
   },
 
   choiceCount(context: RenderableState): number {
-    return context.choiceHistory?.length || 0;
+    if (!context?.choiceHistory || !Array.isArray(context.choiceHistory)) {
+      return 0;
+    }
+    
+    return context.choiceHistory.length;
   },
 
   formatTime(minutes: number): string {
     const totalMinutes = Math.floor(safeNumber(minutes));
+    
+    if (totalMinutes < 0) return '0m';
     if (totalMinutes < 60) return `${totalMinutes}m`;
     
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
-    return `${hours}h ${mins}m`;
+    
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   },
 
   randomBool(probability: number = 0.5): boolean {
-    return Math.random() < Math.max(0, Math.min(1, safeNumber(probability)));
+    const prob = safeNumber(probability, 0.5);
+    const clampedProb = Math.max(0, Math.min(1, prob));
+    return Math.random() < clampedProb;
   },
 
   exportFlags(context: RenderableState): string[] {
-    return [...(context.storyFlags || [])];
+    if (!context?.storyFlags || !Array.isArray(context.storyFlags)) {
+      return [];
+    }
+    
+    return context.storyFlags.filter(flag => typeof flag === 'string' && flag.length > 0);
   },
 
   exportVariables(context: RenderableState): Record<string, any> {
-    return JSON.parse(JSON.stringify(context.variables || {}));
+    if (!context?.variables || typeof context.variables !== 'object') {
+      return {};
+    }
+    
+    try {
+      return JSON.parse(JSON.stringify(context.variables));
+    } catch {
+      const result: Record<string, any> = {};
+      for (const [key, value] of Object.entries(context.variables)) {
+        try {
+          JSON.stringify(value);
+          result[key] = value;
+        } catch {
+          result[key] = '[Non-serializable value]';
+        }
+      }
+      return result;
+    }
   }
 };
 
 export function registerVNHelpers(handlebars: any) {
-  handlebars.registerHelper('hasFlag', function(flagName: string, options: any) {
-    const context = options.data.root as RenderableState;
-    const result = vnHelpers.hasFlag(flagName, context);
-    
-    return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
-  });
+  if (!handlebars || typeof handlebars.registerHelper !== 'function') {
+    console.warn('Invalid Handlebars instance provided to registerVNHelpers');
+    return;
+  }
 
-  handlebars.registerHelper('addFlag', function(flagName: string, options: any) {
-    const context = options.data.root as RenderableState;
-    vnHelpers.addFlag(flagName, context);
-    return '';
-  });
+  try {
+    handlebars.registerHelper('hasFlag', function(flagName: string, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return false;
+        
+        const result = vnHelpers.hasFlag(flagName, context);
+        return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
+      } catch (error) {
+        console.warn('Error in hasFlag helper:', error);
+        return false;
+      }
+    });
 
-  handlebars.registerHelper('removeFlag', function(flagName: string, options: any) {
-    const context = options.data.root as RenderableState;
-    vnHelpers.removeFlag(flagName, context);
-    return '';
-  });
+    handlebars.registerHelper('addFlag', function(flagName: string, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return '';
+        
+        vnHelpers.addFlag(flagName, context);
+        return '';
+      } catch (error) {
+        console.warn('Error in addFlag helper:', error);
+        return '';
+      }
+    });
 
-  handlebars.registerHelper('toggleFlag', function(flagName: string, options: any) {
-    const context = options.data.root as RenderableState;
-    const result = vnHelpers.toggleFlag(flagName, context);
-    return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
-  });
+    handlebars.registerHelper('removeFlag', function(flagName: string, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return '';
+        
+        vnHelpers.removeFlag(flagName, context);
+        return '';
+      } catch (error) {
+        console.warn('Error in removeFlag helper:', error);
+        return '';
+      }
+    });
 
-  handlebars.registerHelper('getVar', function(key: string, defaultValue: any, options: any) {
-    if (typeof defaultValue === 'object' && defaultValue.fn) {
-      options = defaultValue;
-      defaultValue = undefined;
-    }
-    const context = options.data.root as RenderableState;
-    return vnHelpers.getVar(key, defaultValue, context);
-  });
+    handlebars.registerHelper('toggleFlag', function(flagName: string, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return false;
+        
+        const result = vnHelpers.toggleFlag(flagName, context);
+        return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
+      } catch (error) {
+        console.warn('Error in toggleFlag helper:', error);
+        return false;
+      }
+    });
 
-  handlebars.registerHelper('setVar', function(key: string, value: any, options: any) {
-    const context = options.data.root as RenderableState;
-    vnHelpers.setVar(key, value, context);
-    return '';
-  });
+    handlebars.registerHelper('getVar', function(key: string, defaultValue: any, options: any) {
+      try {
+        if (typeof defaultValue === 'object' && defaultValue?.fn) {
+          options = defaultValue;
+          defaultValue = undefined;
+        }
+        
+        const context = options?.data?.root as RenderableState;
+        if (!context) return defaultValue;
+        
+        return vnHelpers.getVar(key, defaultValue, context);
+      } catch (error) {
+        console.warn('Error in getVar helper:', error);
+        return defaultValue;
+      }
+    });
 
-  handlebars.registerHelper('hasVar', function(key: string, options: any) {
-    const context = options.data.root as RenderableState;
-    const result = vnHelpers.hasVar(key, context);
-    return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
-  });
+    handlebars.registerHelper('setVar', function(key: string, value: any, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return '';
+        
+        vnHelpers.setVar(key, value, context);
+        return '';
+      } catch (error) {
+        console.warn('Error in setVar helper:', error);
+        return '';
+      }
+    });
 
-  handlebars.registerHelper('incrementVar', function(key: string, amount: any, options: any) {
-    const context = options.data.root as RenderableState;
-    return vnHelpers.incrementVar(key, amount, context);
-  });
+    handlebars.registerHelper('hasVar', function(key: string, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return false;
+        
+        const result = vnHelpers.hasVar(key, context);
+        return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
+      } catch (error) {
+        console.warn('Error in hasVar helper:', error);
+        return false;
+      }
+    });
 
-  handlebars.registerHelper('playerChose', function(...args: any[]) {
-    const options = args[args.length - 1];
-    const choiceText = args[0];
-    const inScene = args.length > 2 ? args[1] : undefined;
-    const context = options.data.root as RenderableState;
-    const result = vnHelpers.playerChose(choiceText, inScene, context);
-    
-    return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
-  });
+    handlebars.registerHelper('incrementVar', function(key: string, amount: any, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return 0;
+        
+        return vnHelpers.incrementVar(key, amount, context);
+      } catch (error) {
+        console.warn('Error in incrementVar helper:', error);
+        return 0;
+      }
+    });
 
-  handlebars.registerHelper('getLastChoice', function(options: any) {
-    const context = options.data.root as RenderableState;
-    return vnHelpers.getLastChoice(context);
-  });
+    handlebars.registerHelper('playerChose', function(...args: any[]) {
+      try {
+        const options = args[args.length - 1];
+        const choiceText = args[0];
+        const inScene = args.length > 2 ? args[1] : undefined;
+        const context = options?.data?.root as RenderableState;
+        
+        if (!context) return false;
+        
+        const result = vnHelpers.playerChose(choiceText, inScene, context);
+        return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
+      } catch (error) {
+        console.warn('Error in playerChose helper:', error);
+        return false;
+      }
+    });
 
-  handlebars.registerHelper('choiceCount', function(options: any) {
-    const context = options.data.root as RenderableState;
-    return vnHelpers.choiceCount(context);
-  });
+    handlebars.registerHelper('getLastChoice', function(options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return undefined;
+        
+        return vnHelpers.getLastChoice(context);
+      } catch (error) {
+        console.warn('Error in getLastChoice helper:', error);
+        return undefined;
+      }
+    });
 
-  handlebars.registerHelper('formatTime', (minutes: any) => vnHelpers.formatTime(minutes));
+    handlebars.registerHelper('choiceCount', function(options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (!context) return 0;
+        
+        return vnHelpers.choiceCount(context);
+      } catch (error) {
+        console.warn('Error in choiceCount helper:', error);
+        return 0;
+      }
+    });
 
-  handlebars.registerHelper('randomBool', function(this: any, probability: any, options: any) {
-    if (typeof probability === 'object' && probability.fn) {
-      options = probability;
-      probability = 0.5;
-    }
-    const result = vnHelpers.randomBool(probability);
-    return options.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
-  });
+    handlebars.registerHelper('formatTime', (minutes: any) => {
+      try {
+        return vnHelpers.formatTime(minutes);
+      } catch (error) {
+        console.warn('Error in formatTime helper:', error);
+        return '0m';
+      }
+    });
 
-  handlebars.registerHelper('debug', function(value: any, label?: string, options?: any) {
-    if (typeof label === 'object') {
-      options = label;
-      label = 'DEBUG';
-    }
-    console.log(`🐛 ${label || 'DEBUG'}:`, value);
-    if (value && typeof value === 'object') {
-      console.log('   Type:', Array.isArray(value) ? 'Array' : 'Object');
-      console.log('   Keys/Length:', Array.isArray(value) ? value.length : Object.keys(value));
-    }
-    return '';
-  });
+    handlebars.registerHelper('randomBool', function(this: any, probability: any, options: any) {
+      try {
+        if (typeof probability === 'object' && probability?.fn) {
+          options = probability;
+          probability = 0.5;
+        }
+        
+        const result = vnHelpers.randomBool(probability);
+        return options?.fn ? (result ? options.fn(this) : options.inverse(this)) : result;
+      } catch (error) {
+        console.warn('Error in randomBool helper:', error);
+        return false;
+      }
+    });
 
-  handlebars.registerHelper('timestamp', () => Date.now());
-  handlebars.registerHelper('currentDate', () => new Date().toLocaleDateString());
-  handlebars.registerHelper('currentTime', () => new Date().toLocaleTimeString());
+    handlebars.registerHelper('debug', function(value: any, label?: string, options?: any) {
+      try {
+        if (label && typeof label === 'object' && 'fn' in label) {
+          options = label;
+          label = 'DEBUG';
+        }
+        
+        const safeLabel = safeString(label || 'DEBUG');
+        console.log(`🐛 ${safeLabel}:`, value);
+        
+        if (value && typeof value === 'object') {
+          console.log('   Type:', Array.isArray(value) ? 'Array' : 'Object');
+          
+          if (Array.isArray(value)) {
+            console.log('   Length:', value.length);
+          } else {
+            try {
+              console.log('   Keys:', Object.keys(value));
+            } catch {
+              console.log('   Keys: [Unable to enumerate]');
+            }
+          }
+        }
+        
+        return '';
+      } catch (error) {
+        console.warn('Error in debug helper:', error);
+        return '';
+      }
+    });
+
+    // Additional utility helpers with error handling
+    handlebars.registerHelper('timestamp', () => {
+      try {
+        return Date.now();
+      } catch (error) {
+        console.warn('Error in timestamp helper:', error);
+        return 0;
+      }
+    });
+
+    handlebars.registerHelper('currentDate', () => {
+      try {
+        return new Date().toLocaleDateString();
+      } catch (error) {
+        console.warn('Error in currentDate helper:', error);
+        return '';
+      }
+    });
+
+    handlebars.registerHelper('currentTime', () => {
+      try {
+        return new Date().toLocaleTimeString();
+      } catch (error) {
+        console.warn('Error in currentTime helper:', error);
+        return '';
+      }
+    });
+
+  } catch (error) {
+    console.error('Failed to register VN helpers:', error);
+  }
 }
 
 export { getNestedValue, setNestedValue };

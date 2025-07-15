@@ -197,10 +197,10 @@ export async function runSaveLoadTests() {
     
     // Test if startScene supports instruction parameter
     try {
-      engine.loadScript('test_api: ["First", "Second", "Third"]');
-      const result0 = engine.startScene('test_api', 0);
-      const result1 = engine.startScene('test_api', 1);
-      const result2 = engine.startScene('test_api', 2);
+      engine.loadScript(LARGE_SAVE_SCRIPT);
+      const result0 = engine.startScene('scene_0', 0);
+      const result1 = engine.startScene('scene_0', 1);
+      const result2 = engine.startScene('scene_0', 2);
       
       // If instruction parameter works, different indices should give different content
       if (result0.content !== result1.content && result1.content !== result2.content) {

@@ -10,7 +10,7 @@ export interface VNHelpers {
   getVar(key: string, defaultValue?: any, context?: RenderableState): any;
   setVar(key: string, value: any, context: RenderableState): void;
   hasVar(key: string, context: RenderableState): boolean;
-  incrementVar(key: string, amount: number, context: RenderableState): number;
+  incrementVar(key: string, amount: number, context: RenderableState): void;
   
   playerChose(choiceText: string, inScene?: string, context?: RenderableState): boolean;
   getLastChoice(context: RenderableState): ChoiceRecord | undefined;
@@ -179,9 +179,9 @@ export const vnHelpers: VNHelpers = {
     return false;
   },
 
-  incrementVar(key: string, amount: number, context: RenderableState): number {
+  incrementVar(key: string, amount: number, context: RenderableState): void {
     if (!key || typeof key !== 'string' || !context) {
-      return 0;
+      return;
     }
     
     const currentValue = safeNumber(vnHelpers.getVar(key, 0, context));
@@ -189,8 +189,6 @@ export const vnHelpers: VNHelpers = {
     const newValue = currentValue + incrementAmount;
     
     vnHelpers.setVar(key, newValue, context);
-    
-    return newValue;
   },
 
   playerChose(choiceText: string, inScene?: string, context?: RenderableState): boolean {

@@ -13,6 +13,7 @@ import type {
 } from "../../types";
 import type { GameStateManager } from "../state";
 import type { TemplateManager } from "../templates";
+import { helpers } from '../helpers';
 
 export class ScriptEngine {
   private scenes: Map<string, ParsedScene> = new Map();
@@ -115,7 +116,8 @@ export class ScriptEngine {
 
     if (choice.goto) {
       this.pendingChoices = null;
-      return this.startScene(choice.goto);
+      const target = this.renderTemplate(choice.goto);
+      return this.startScene(target);
     }
 
     this.pendingChoices = null;
@@ -258,8 +260,10 @@ export class ScriptEngine {
   }
 
   private executeJump(instruction: JumpInstruction): ScriptResult {
-    return this.startScene(instruction.target);
+    const target = this.renderTemplate(instruction.target);
+    return this.startScene(target);
   }
+
 
   private executeActions(actions: UserAction[]): void {
     actions.forEach((action) => this.executeAction(action));
@@ -269,29 +273,95 @@ export class ScriptEngine {
     try {
       switch (action.type) {
         case "setVar":
-          this.gameState.setVariable(action.key, action.value);
+          const key = this.renderTemplate(action.key.toString());
+          const value = this.renderActionValue(action.value);
+          this.gameState.setVariable(key, value);
           break;
+          
         case "addVar":
-          this.gameState.addToVariable(action.key, action.value);
+          const addKey = this.renderTemplate(action.key.toString());
+          const addValue = this.renderActionValue(action.value);
+          this.gameState.addToVariable(addKey, addValue);
           break;
+          
         case "setFlag":
-          this.gameState.setStoryFlag(action.flag);
+          const flag = this.renderTemplate(action.flag.toString());
+          this.gameState.setStoryFlag(flag);
           break;
+          
         case "clearFlag":
-          this.gameState.clearStoryFlag(action.flag);
+          const clearFlag = this.renderTemplate(action.flag.toString());
+          this.gameState.clearStoryFlag(clearFlag);
           break;
+          
         case "addToList":
-          this.gameState.addToList(action.list, action.item);
+          const listName = this.renderTemplate(action.list.toString());
+          const item = this.renderActionValue(action.item);
+          this.gameState.addToList(listName, item);
           break;
+          
         case "addTime":
-          this.gameState.addTime(action.minutes);
+          const minutes = this.renderActionValue(action.minutes);
+          this.gameState.addTime(Number(minutes));
           break;
+          
+        case "helper":
+          this.executeHelperAction(action);
+          break;
+          
         default:
           console.warn(`Unknown action type: ${action.type}`);
       }
     } catch (error: any) {
       console.error(`Error executing action ${action.type}:`, error);
     }
+  }
+
+  private renderActionValue(value: any): any {
+    if (typeof value === 'string') {
+      if (value.includes('{{') && value.includes('}}')) {
+        const rendered = this.renderTemplate(value);
+        if (/^\-?\d+(\.\d+)?$/.test(rendered)) {
+          return Number(rendered);
+        }
+        if (rendered === 'true') return true;
+        if (rendered === 'false') return false;
+        return rendered;
+      }
+      return value;
+    }
+    return value;
+  }
+  private executeHelperAction(action: any): void {
+    const { helper } = action;
+    const args = action.args?.map((arg: any) => this.renderActionValue(arg)) || [];
+    const result = action.result ? this.renderTemplate(action.result.toString()) : null;
+    const value = this.callHelper(helper, args);
+    
+    if (result && value !== undefined) {
+      this.gameState.setVariable(result, value);
+    }
+  }
+
+  private callHelper(helperRef: string, args: any[]): any {
+    const parts = helperRef.split('.');
+    if (parts.length !== 2) {
+      throw new Error(`Invalid helper reference: ${helperRef}`);
+    }
+    
+    const [category, method] = parts;
+    const helperCategory = (helpers as any)[category];
+    
+    if (!helperCategory) {
+      throw new Error(`Helper category not found: ${category}`);
+    }
+    
+    const helperFunction = helperCategory[method];
+    if (!helperFunction || typeof helperFunction !== 'function') {
+      throw new Error(`Helper method not found: ${helperRef}`);
+    }
+    
+    return helperFunction(...args);
   }
 
   private filterAvailableChoices(choices: ChoiceOption[]): ChoiceOption[] {

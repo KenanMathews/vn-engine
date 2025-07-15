@@ -324,7 +324,7 @@ export class VNEngine {
     error?: string;
   } {
     return {
-      version: '1.2.2',
+      version: '1.2.4',
       templateEngine: this.getTemplateEngineInfo(),
       isLoaded: this.getIsLoaded(),
       currentScene: this.getCurrentScene(),

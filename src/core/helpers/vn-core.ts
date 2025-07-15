@@ -1,4 +1,5 @@
 import type { ChoiceRecord, RenderableState } from '../../types';
+import type { GameStateManager } from '../state';
 
 export interface VNHelpers {
   hasFlag(flagName: string, context: RenderableState): boolean;
@@ -22,7 +23,13 @@ export interface VNHelpers {
   exportVariables(context: RenderableState): Record<string, any>;
 }
 
-function getNestedValue(obj: any, path: string): any {
+let gameStateManager: GameStateManager | null = null;
+
+export function setGameStateManager(gsm: GameStateManager): void {
+  gameStateManager = gsm;
+}
+
+export function getNestedValue(obj: any, path: string): any {
   if (!obj || !path || typeof path !== 'string') return undefined;
   
   return path.split('.').reduce((current, key) => {
@@ -32,7 +39,7 @@ function getNestedValue(obj: any, path: string): any {
   }, obj);
 }
 
-function setNestedValue(obj: any, path: string, value: any): void {
+export function setNestedValue(obj: any, path: string, value: any): void {
   if (!obj || !path || typeof path !== 'string') return;
   
   const parts = path.split('.');
@@ -71,11 +78,20 @@ function safeString(value: any): string {
 export const vnHelpers: VNHelpers = {
   hasFlag(flagName: string, context: RenderableState): boolean {
     if (!flagName || typeof flagName !== 'string') return false;
+    
+    if (gameStateManager) {
+      return gameStateManager.hasStoryFlag(flagName);
+    }
+    
     return Array.isArray(context.storyFlags) && context.storyFlags.includes(flagName);
   },
 
   addFlag(flagName: string, context: RenderableState): void {
     if (!flagName || typeof flagName !== 'string') return;
+    
+    if (gameStateManager) {
+      gameStateManager.setStoryFlag(flagName);
+    }
     
     if (!Array.isArray(context.storyFlags)) {
       context.storyFlags = [];
@@ -87,9 +103,13 @@ export const vnHelpers: VNHelpers = {
   },
 
   removeFlag(flagName: string, context: RenderableState): void {
-    if (!flagName || typeof flagName !== 'string' || !Array.isArray(context.storyFlags)) {
-      return;
+    if (!flagName || typeof flagName !== 'string') return;
+    
+    if (gameStateManager) {
+      gameStateManager.clearStoryFlag(flagName);
     }
+    
+    if (!Array.isArray(context.storyFlags)) return;
     
     const index = context.storyFlags.indexOf(flagName);
     if (index > -1) {
@@ -110,16 +130,31 @@ export const vnHelpers: VNHelpers = {
   },
 
   getVar(key: string, defaultValue: any = undefined, context?: RenderableState): any {
-    if (!key || typeof key !== 'string' || !context?.variables) {
+    if (!key || typeof key !== 'string') {
       return defaultValue;
     }
     
-    const value = getNestedValue(context.variables, key);
-    return value !== undefined ? value : defaultValue;
+    if (gameStateManager) {
+      const value = gameStateManager.getVariable(key);
+      if (value !== undefined) {
+        return value;
+      }
+    }
+    
+    if (context?.variables) {
+      const value = getNestedValue(context.variables, key);
+      return value !== undefined ? value : defaultValue;
+    }
+    
+    return defaultValue;
   },
 
   setVar(key: string, value: any, context: RenderableState): void {
     if (!key || typeof key !== 'string' || !context) return;
+    
+    if (gameStateManager) {
+      gameStateManager.setVariable(key, value);
+    }
     
     if (!context.variables || typeof context.variables !== 'object') {
       context.variables = {};
@@ -129,11 +164,19 @@ export const vnHelpers: VNHelpers = {
   },
 
   hasVar(key: string, context: RenderableState): boolean {
-    if (!key || typeof key !== 'string' || !context?.variables) {
+    if (!key || typeof key !== 'string') {
       return false;
     }
     
-    return getNestedValue(context.variables, key) !== undefined;
+    if (gameStateManager) {
+      return gameStateManager.getVariable(key) !== undefined;
+    }
+    
+    if (context?.variables) {
+      return getNestedValue(context.variables, key) !== undefined;
+    }
+    
+    return false;
   },
 
   incrementVar(key: string, amount: number, context: RenderableState): number {
@@ -146,41 +189,57 @@ export const vnHelpers: VNHelpers = {
     const newValue = currentValue + incrementAmount;
     
     vnHelpers.setVar(key, newValue, context);
+    
     return newValue;
   },
 
   playerChose(choiceText: string, inScene?: string, context?: RenderableState): boolean {
-    if (!choiceText || typeof choiceText !== 'string' || !context?.choiceHistory) {
+    if (!choiceText || typeof choiceText !== 'string') {
       return false;
     }
     
-    if (!Array.isArray(context.choiceHistory)) {
-      return false;
+    if (gameStateManager) {
+      return gameStateManager.playerChose(choiceText, inScene);
     }
     
-    return context.choiceHistory.some(choice => {
-      if (!choice || typeof choice !== 'object') return false;
-      
-      const textMatches = choice.choiceText === choiceText;
-      const sceneMatches = !inScene || choice.scene === inScene;
-      return textMatches && sceneMatches;
-    });
+    if (context?.choiceHistory && Array.isArray(context.choiceHistory)) {
+      return context.choiceHistory.some(choice => {
+        if (!choice || typeof choice !== 'object') return false;
+        
+        const textMatches = choice.choiceText === choiceText;
+        const sceneMatches = !inScene || choice.scene === inScene;
+        return textMatches && sceneMatches;
+      });
+    }
+    
+    return false;
   },
 
   getLastChoice(context: RenderableState): ChoiceRecord | undefined {
-    if (!context?.choiceHistory || !Array.isArray(context.choiceHistory) || context.choiceHistory.length === 0) {
-      return undefined;
+    if (gameStateManager) {
+      const choiceHistory = gameStateManager.getChoiceHistory();
+      if (choiceHistory.length > 0) {
+        return choiceHistory[choiceHistory.length - 1];
+      }
     }
     
-    return context.choiceHistory[context.choiceHistory.length - 1];
+    if (context?.choiceHistory && Array.isArray(context.choiceHistory) && context.choiceHistory.length > 0) {
+      return context.choiceHistory[context.choiceHistory.length - 1];
+    }
+    
+    return undefined;
   },
 
   choiceCount(context: RenderableState): number {
-    if (!context?.choiceHistory || !Array.isArray(context.choiceHistory)) {
-      return 0;
+    if (gameStateManager) {
+      return gameStateManager.getChoiceHistory().length;
     }
     
-    return context.choiceHistory.length;
+    if (context?.choiceHistory && Array.isArray(context.choiceHistory)) {
+      return context.choiceHistory.length;
+    }
+    
+    return 0;
   },
 
   formatTime(minutes: number): string {
@@ -202,32 +261,42 @@ export const vnHelpers: VNHelpers = {
   },
 
   exportFlags(context: RenderableState): string[] {
-    if (!context?.storyFlags || !Array.isArray(context.storyFlags)) {
-      return [];
+    if (gameStateManager) {
+      const state = gameStateManager.getState();
+      return Array.from(state.storyFlags);
     }
     
-    return context.storyFlags.filter(flag => typeof flag === 'string' && flag.length > 0);
+    if (context?.storyFlags && Array.isArray(context.storyFlags)) {
+      return context.storyFlags.filter(flag => typeof flag === 'string' && flag.length > 0);
+    }
+    
+    return [];
   },
 
   exportVariables(context: RenderableState): Record<string, any> {
-    if (!context?.variables || typeof context.variables !== 'object') {
-      return {};
+    if (gameStateManager) {
+      const state = gameStateManager.getState();
+      return Object.fromEntries(state.variables.entries());
     }
     
-    try {
-      return JSON.parse(JSON.stringify(context.variables));
-    } catch {
-      const result: Record<string, any> = {};
-      for (const [key, value] of Object.entries(context.variables)) {
-        try {
-          JSON.stringify(value);
-          result[key] = value;
-        } catch {
-          result[key] = '[Non-serializable value]';
+    if (context?.variables && typeof context.variables === 'object') {
+      try {
+        return JSON.parse(JSON.stringify(context.variables));
+      } catch {
+        const result: Record<string, any> = {};
+        for (const [key, value] of Object.entries(context.variables)) {
+          try {
+            JSON.stringify(value);
+            result[key] = value;
+          } catch {
+            result[key] = '[Non-serializable value]';
+          }
         }
+        return result;
       }
-      return result;
     }
+    
+    return {};
   }
 };
 
@@ -238,11 +307,67 @@ export function registerVNHelpers(handlebars: any) {
   }
 
   try {
+    handlebars.registerHelper('setVar', function(key: string, value: any, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        if (context) {
+          vnHelpers.setVar(key, value, context);
+        }
+        return ''; 
+      } catch (error) {
+        console.warn('Error in setVar helper:', error);
+        return '';
+      }
+    });
+
+    handlebars.registerHelper('getVar', function(key: string, defaultValue: any, options: any) {
+      try {
+        if (typeof defaultValue === 'object' && defaultValue?.fn) {
+          options = defaultValue;
+          defaultValue = '';
+        }
+        
+        const context = options?.data?.root as RenderableState;
+        const value = vnHelpers.getVar(key, defaultValue, context);
+        
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+          return value;
+        }
+        
+        if (Array.isArray(value)) {
+          return value.join(', ');
+        }
+        
+        if (typeof value === 'object' && value !== null) {
+          try {
+            return JSON.stringify(value);
+          } catch {
+            return String(value);
+          }
+        }
+        
+        return String(value);
+        
+      } catch (error) {
+        console.warn('Error in getVar helper:', error);
+        return defaultValue || '';
+      }
+    });
+
+    handlebars.registerHelper('hasVar', function(key: string, options: any) {
+      try {
+        const context = options?.data?.root as RenderableState;
+        const result = vnHelpers.hasVar(key, context);
+        return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
+      } catch (error) {
+        console.warn('Error in hasVar helper:', error);
+        return false;
+      }
+    });
+
     handlebars.registerHelper('hasFlag', function(flagName: string, options: any) {
       try {
         const context = options?.data?.root as RenderableState;
-        if (!context) return false;
-        
         const result = vnHelpers.hasFlag(flagName, context);
         return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
       } catch (error) {
@@ -254,9 +379,9 @@ export function registerVNHelpers(handlebars: any) {
     handlebars.registerHelper('addFlag', function(flagName: string, options: any) {
       try {
         const context = options?.data?.root as RenderableState;
-        if (!context) return '';
-        
-        vnHelpers.addFlag(flagName, context);
+        if (context) {
+          vnHelpers.addFlag(flagName, context);
+        }
         return '';
       } catch (error) {
         console.warn('Error in addFlag helper:', error);
@@ -267,9 +392,9 @@ export function registerVNHelpers(handlebars: any) {
     handlebars.registerHelper('removeFlag', function(flagName: string, options: any) {
       try {
         const context = options?.data?.root as RenderableState;
-        if (!context) return '';
-        
-        vnHelpers.removeFlag(flagName, context);
+        if (context) {
+          vnHelpers.removeFlag(flagName, context);
+        }
         return '';
       } catch (error) {
         console.warn('Error in removeFlag helper:', error);
@@ -279,58 +404,15 @@ export function registerVNHelpers(handlebars: any) {
 
     handlebars.registerHelper('toggleFlag', function(flagName: string, options: any) {
       try {
-        const context = options?.data?.root as RenderableState;
-        if (!context) return false;
-        
-        const result = vnHelpers.toggleFlag(flagName, context);
-        return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
-      } catch (error) {
-        console.warn('Error in toggleFlag helper:', error);
-        return false;
-      }
-    });
-
-    handlebars.registerHelper('getVar', function(key: string, defaultValue: any, options: any) {
-      try {
-        if (typeof defaultValue === 'object' && defaultValue?.fn) {
-          options = defaultValue;
-          defaultValue = undefined;
+          const context = options?.data?.root as RenderableState;
+          if (!context) return false;
+          
+          const result = vnHelpers.toggleFlag(flagName, context);
+          return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
+        } catch (error) {
+          console.warn('Error in toggleFlag helper:', error);
+          return false;
         }
-        
-        const context = options?.data?.root as RenderableState;
-        if (!context) return defaultValue;
-        
-        return vnHelpers.getVar(key, defaultValue, context);
-      } catch (error) {
-        console.warn('Error in getVar helper:', error);
-        return defaultValue;
-      }
-    });
-
-    handlebars.registerHelper('setVar', function(key: string, value: any, options: any) {
-      try {
-        const context = options?.data?.root as RenderableState;
-        if (!context) return '';
-        
-        vnHelpers.setVar(key, value, context);
-        return '';
-      } catch (error) {
-        console.warn('Error in setVar helper:', error);
-        return '';
-      }
-    });
-
-    handlebars.registerHelper('hasVar', function(key: string, options: any) {
-      try {
-        const context = options?.data?.root as RenderableState;
-        if (!context) return false;
-        
-        const result = vnHelpers.hasVar(key, context);
-        return options.fn ? (result ? options.fn(context) : options.inverse(context)) : result;
-      } catch (error) {
-        console.warn('Error in hasVar helper:', error);
-        return false;
-      }
     });
 
     handlebars.registerHelper('incrementVar', function(key: string, amount: any, options: any) {
@@ -338,7 +420,8 @@ export function registerVNHelpers(handlebars: any) {
         const context = options?.data?.root as RenderableState;
         if (!context) return 0;
         
-        return vnHelpers.incrementVar(key, amount, context);
+        const newValue = vnHelpers.incrementVar(key, amount, context);
+        return newValue;
       } catch (error) {
         console.warn('Error in incrementVar helper:', error);
         return 0;
@@ -441,7 +524,6 @@ export function registerVNHelpers(handlebars: any) {
       }
     });
 
-    // Additional utility helpers with error handling
     handlebars.registerHelper('timestamp', () => {
       try {
         return Date.now();
@@ -473,5 +555,3 @@ export function registerVNHelpers(handlebars: any) {
     console.error('Failed to register VN helpers:', error);
   }
 }
-
-export { getNestedValue, setNestedValue };

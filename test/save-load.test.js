@@ -386,8 +386,10 @@ export async function runSaveLoadTests() {
     // Play through the game to set up state via Handlebars helpers
     engine.startScene('start');
     engine.continue(); // Score becomes 10
+    engine.continue(); // Score becomes 10
     engine.continue(); // Go to area1
     engine.continue(); // Encounter count becomes 1, score becomes 15
+    engine.continue();
     
     const beforeSaveScore = engine.getVariable('score');
     const beforeSaveEncounters = engine.getVariable('encounter_count');
@@ -395,7 +397,7 @@ export async function runSaveLoadTests() {
     
     console.log(`   📊 Before save - Score: ${beforeSaveScore}, Encounters: ${beforeSaveEncounters}, Visited: ${beforeSaveVisited}`);
     
-    const saveData = engine.getGameState();
+    const saveData = engine.createSave();
     
     const loadResult = engine.loadSave(saveData);
     
@@ -403,6 +405,8 @@ export async function runSaveLoadTests() {
     const afterLoadEncounters = engine.getVariable('encounter_count');
     const afterLoadVisited = engine.getVariable('visited_start');
     
+    console.log(`   📊 After save - Score: ${afterLoadScore}, Encounters: ${afterLoadEncounters}, Visited: ${afterLoadVisited}`);
+
     assert.assertEqual(afterLoadScore, beforeSaveScore, 'Score should not change on load (no helper re-execution)', {
       engine,
       packageInfo,
@@ -458,7 +462,7 @@ export async function runSaveLoadTests() {
     
     // Reset and manually restore using startScene with instruction parameter
     engine.reset();
-    engine.setGameState(saveData);
+    engine.loadSave(saveData);
     
     let manualLoadResult;
     let instructionParameterWorks = false;
@@ -801,8 +805,8 @@ export async function runSaveLoadTests() {
       }
       
       // Load using available method
-      if (typeof engine.loadFromGameState === 'function') {
-        engine.loadFromGameState(saveData);
+      if (typeof engine.loadSave === 'function') {
+        engine.loadSave(saveData);
       } else {
         engine.setGameState(saveData);
         engine.startScene('start');

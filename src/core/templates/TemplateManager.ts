@@ -1,6 +1,8 @@
 
 import type { RenderableState } from '../../types/index.js';
+import type { GameStateManager } from '../state';
 import { SimpleTemplateEngine } from './SimpleTemplateEngine';
+import { setGameStateManager, registerAllHelpers } from '../helpers/index.js';
 
 export class TemplateManager {
   private handlebars: any | null = null;
@@ -8,11 +10,17 @@ export class TemplateManager {
   private isHandlebarsAvailable: boolean = false;
   private helpersRegistered: boolean = false;
   private isTestMode: boolean = false;
+  private gameStateManager: GameStateManager | null = null;
 
   constructor() {
     this.simpleEngine = new SimpleTemplateEngine();
     this.isTestMode = typeof process !== 'undefined' && 
       (process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test')));
+  }
+  
+  setGameStateManager(gameStateManager: GameStateManager): void {
+    this.gameStateManager = gameStateManager;
+    setGameStateManager(gameStateManager);
   }
 
   async initialize(): Promise<void> {
@@ -65,28 +73,14 @@ export class TemplateManager {
     if (!this.isHandlebarsAvailable || this.helpersRegistered) return;
 
     try {
-      if (typeof require !== 'undefined') {
-        try {
-          const helpersModule = require('../helpers');
-          if (helpersModule.registerAllHelpers && this.handlebars) {
-            helpersModule.registerAllHelpers(this.handlebars);
-            this.helpersRegistered = true;
-            if (!this.isTestMode) {
-              console.log('✅ VN Engine helpers registered with Handlebars (sync)');
-            }
-            return;
-          }
-        } catch (error) {
-        }
-      }
-      
-      const helpersModule = await import('../helpers');
-      if (helpersModule.registerAllHelpers && this.handlebars) {
-        helpersModule.registerAllHelpers(this.handlebars);
+      if (registerAllHelpers && this.handlebars) {
+        registerAllHelpers(this.handlebars);
         this.helpersRegistered = true;
         if (!this.isTestMode) {
-          console.log('✅ VN Engine helpers registered with Handlebars (async)');
+          console.log('✅ VN Engine helpers registered with Handlebars');
         }
+      } else {
+        throw new Error('registerAllHelpers function not available');
       }
     } catch (error) {
       if (!this.isTestMode) {

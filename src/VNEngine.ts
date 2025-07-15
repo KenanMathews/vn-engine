@@ -45,6 +45,9 @@ export class VNEngine {
 
     this.gameState = new GameStateManager();
     this.templateManager = new TemplateManager();
+    
+    this.templateManager.setGameStateManager(this.gameState);
+    
     this.scriptEngine = new ScriptEngine(this.gameState, this.templateManager);
     this.scriptParser = new ScriptParser();
 
@@ -81,6 +84,7 @@ export class VNEngine {
     if (info.type === 'handlebars') {
       console.log('🎭 VN Engine initialized with Handlebars template engine');
       console.log(`   Helpers registered: ${info.helpersRegistered ? '✅' : '⚠️ Failed'}`);
+      console.log('   📝 VN helpers now integrated with game state');
     } else {
       console.log('📝 VN Engine initialized with Simple template engine');
       console.log('   To enable full templating features, install Handlebars:');
@@ -99,7 +103,7 @@ export class VNEngine {
           'Math: add, subtract, multiply, divide, min, max, round, random, etc.',
           'String: uppercase, lowercase, capitalize, trim, truncate, etc.',
           'Comparison: eq, ne, gt, lt, and, or, not, contains, etc.',
-          'VN: hasFlag, getVar, playerChose, formatTime, etc.'
+          'VN: hasFlag, getVar, setVar, addFlag, removeFlag, playerChose, formatTime, etc.'
         ]
       };
     } else {
@@ -145,7 +149,7 @@ export class VNEngine {
           ? '{{#if condition}}...{{else}}...{{/if}}'
           : '{{#if hasFlag(\'flagName\')}}...{{else}}...{{/if}}',
         helper: info.supportedFeatures.helpers 
-          ? '{{capitalize playerName}} or {{add score 10}}'
+          ? '{{setVar "score" 100}} or {{addFlag "completedQuest"}}'
           : undefined,
         loop: info.supportedFeatures.loops
           ? '{{#each items}}{{this}}{{/each}}'
@@ -320,7 +324,7 @@ export class VNEngine {
     error?: string;
   } {
     return {
-      version: '1.2.1',
+      version: '1.2.2',
       templateEngine: this.getTemplateEngineInfo(),
       isLoaded: this.getIsLoaded(),
       currentScene: this.getCurrentScene(),

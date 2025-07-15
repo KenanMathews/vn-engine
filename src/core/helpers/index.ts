@@ -2,7 +2,7 @@ import { arrayHelpers, registerArrayHelpers, type ArrayHelpers } from './array';
 import { comparisonHelpers, registerComparisonHelpers, type ComparisonHelpers } from './comparison';
 import { mathHelpers, registerMathHelpers, type MathHelpers } from './math';
 import { stringHelpers, registerStringHelpers, type StringHelpers } from './string';
-import { vnHelpers, registerVNHelpers, type VNHelpers, getNestedValue, setNestedValue } from './vn-core';
+import { vnHelpers, registerVNHelpers, type VNHelpers, getNestedValue, setNestedValue, setGameStateManager } from './vn-core';
 import { assetHelpers, registerAssetHelpers, type AssetHelpers } from './asset';
 
 export interface VNEngineHelpers {
@@ -130,7 +130,8 @@ export {
   registerVNHelpers,
   registerAssetHelpers,
   getNestedValue,
-  setNestedValue
+  setNestedValue,
+  setGameStateManager
 };
 
 export type {
